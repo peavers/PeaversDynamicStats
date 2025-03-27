@@ -57,19 +57,7 @@ function Core:CreateTitleBar()
     subtitle:SetTextColor(0.8, 0.8, 0.8)
 
     -- Make frame movable
-    self.frame:SetMovable(true)
-    self.frame:EnableMouse(true)
-    self.frame:RegisterForDrag("LeftButton")
-    self.frame:SetScript("OnDragStart", self.frame.StartMoving)
-    self.frame:SetScript("OnDragStop", function(frame)
-        frame:StopMovingOrSizing()
-        -- Save position
-        local point, _, _, x, y = frame:GetPoint()
-        ST.Config.framePoint = point
-        ST.Config.frameX = x
-        ST.Config.frameY = y
-        ST.Config:Save()
-    end)
+    self:UpdateFrameLock()
 
     return titleBar
 end
@@ -109,6 +97,8 @@ function Core:Initialize()
 
     -- Create the stat bars
     self:CreateBars()
+
+    self:UpdateFrameLock()
 
     -- Show if needed
     if ST.Config.showOnLogin then
@@ -270,6 +260,32 @@ function Core:AdjustFrameHeight()
     end
 end
 
+function Core:UpdateFrameLock()
+    if ST.Config.lockPosition then
+        -- Disable dragging
+        self.frame:SetMovable(false)
+        self.frame:EnableMouse(false)
+        -- Don't pass nil to RegisterForDrag, pass an empty string instead
+        self.frame:RegisterForDrag("")
+        self.frame:SetScript("OnDragStart", nil)
+        self.frame:SetScript("OnDragStop", nil)
+    else
+        -- Enable dragging
+        self.frame:SetMovable(true)
+        self.frame:EnableMouse(true)
+        self.frame:RegisterForDrag("LeftButton")
+        self.frame:SetScript("OnDragStart", self.frame.StartMoving)
+        self.frame:SetScript("OnDragStop", function(frame)
+            frame:StopMovingOrSizing()
+            -- Save position
+            local point, _, _, x, y = frame:GetPoint()
+            ST.Config.framePoint = point
+            ST.Config.frameX = x
+            ST.Config.frameY = y
+            ST.Config:Save()
+        end)
+    end
+end
 -- Register events
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGOUT")

@@ -12,6 +12,7 @@ ST.Config = {
     framePoint = "RIGHT",
     frameX = -20,
     frameY = 0,
+    lockPosition = false, -- New option
 
     -- Bar settings
     barWidth = 230,
@@ -29,7 +30,7 @@ ST.Config = {
     updateInterval = 0.5,
     combatUpdateInterval = 0.2,
     showOnLogin = true,
-    showTitleBar = true, -- New option
+    showTitleBar = true,
     showStats = {
         HASTE = true,
         CRIT = true,
@@ -77,7 +78,8 @@ function Config:Save()
     PeaversDynamicStatsDB.bgColor = self.bgColor
     PeaversDynamicStatsDB.showStats = self.showStats
     PeaversDynamicStatsDB.barSpacing = self.barSpacing
-    PeaversDynamicStatsDB.showTitleBar = self.showTitleBar -- New line
+    PeaversDynamicStatsDB.showTitleBar = self.showTitleBar
+    PeaversDynamicStatsDB.lockPosition = self.lockPosition -- New line
 end
 
 -- Add to the Config:Load() function:
@@ -96,7 +98,8 @@ function Config:Load()
     if PeaversDynamicStatsDB.bgColor then self.bgColor = PeaversDynamicStatsDB.bgColor end
     if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
     if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
-    if PeaversDynamicStatsDB.showTitleBar ~= nil then self.showTitleBar = PeaversDynamicStatsDB.showTitleBar end -- New line
+    if PeaversDynamicStatsDB.showTitleBar ~= nil then self.showTitleBar = PeaversDynamicStatsDB.showTitleBar end
+    if PeaversDynamicStatsDB.lockPosition ~= nil then self.lockPosition = PeaversDynamicStatsDB.lockPosition end -- New line
 end
 
 
@@ -346,6 +349,34 @@ function Config:InitializeOptions()
 
     yPos = yPos - 30  -- Move down for next element
 
+    -- Lock position checkbox
+    local lockPositionCheckbox = CreateFrame("CheckButton", "PeaversLockPositionCheckbox", content, "InterfaceOptionsCheckButtonTemplate")
+    lockPositionCheckbox:SetPoint("TOPLEFT", 25, yPos)
+
+    -- Get and set the text
+    local textObj = lockPositionCheckbox.Text
+    if not textObj and lockPositionCheckbox:GetName() then
+        textObj = GetGlobal(lockPositionCheckbox:GetName().."Text")
+    end
+
+    if textObj then
+        textObj:SetText("Lock Frame Position")
+        textObj:SetTextColor(1, 1, 1)  -- White color
+    end
+
+    -- Set the initial state
+    lockPositionCheckbox:SetChecked(Config.lockPosition)
+
+    -- OnClick handler
+    lockPositionCheckbox:SetScript("OnClick", function(self)
+        Config.lockPosition = self:GetChecked()
+        Config:Save()
+        if ST.Core then
+            ST.Core:UpdateFrameLock()
+        end
+    end)
+
+    yPos = yPos - 30  -- Move down for next element
 
     -- Background opacity slider
     local opacityLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")

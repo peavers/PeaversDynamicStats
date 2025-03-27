@@ -51,12 +51,14 @@ function Config:Save()
     PeaversDynamicStatsDB.framePoint = self.framePoint
     PeaversDynamicStatsDB.frameX = self.frameX
     PeaversDynamicStatsDB.frameY = self.frameY
+    PeaversDynamicStatsDB.frameWidth = self.frameWidth
+    PeaversDynamicStatsDB.barWidth = self.barWidth
+    PeaversDynamicStatsDB.barHeight = self.barHeight
     PeaversDynamicStatsDB.barTexture = self.barTexture
     PeaversDynamicStatsDB.bgAlpha = self.bgAlpha
     PeaversDynamicStatsDB.bgColor = self.bgColor
     PeaversDynamicStatsDB.showStats = self.showStats
     PeaversDynamicStatsDB.barSpacing = self.barSpacing
-    PeaversDynamicStatsDB.barHeight = self.barHeight
 end
 
 -- Function to load configuration
@@ -67,12 +69,14 @@ function Config:Load()
     if PeaversDynamicStatsDB.framePoint then self.framePoint = PeaversDynamicStatsDB.framePoint end
     if PeaversDynamicStatsDB.frameX then self.frameX = PeaversDynamicStatsDB.frameX end
     if PeaversDynamicStatsDB.frameY then self.frameY = PeaversDynamicStatsDB.frameY end
+    if PeaversDynamicStatsDB.frameWidth then self.frameWidth = PeaversDynamicStatsDB.frameWidth end
+    if PeaversDynamicStatsDB.barWidth then self.barWidth = PeaversDynamicStatsDB.barWidth end
+    if PeaversDynamicStatsDB.barHeight then self.barHeight = PeaversDynamicStatsDB.barHeight end
     if PeaversDynamicStatsDB.barTexture then self.barTexture = PeaversDynamicStatsDB.barTexture end
     if PeaversDynamicStatsDB.bgAlpha then self.bgAlpha = PeaversDynamicStatsDB.bgAlpha end
     if PeaversDynamicStatsDB.bgColor then self.bgColor = PeaversDynamicStatsDB.bgColor end
     if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
     if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
-    if PeaversDynamicStatsDB.barHeight then self.barHeight = PeaversDynamicStatsDB.barHeight end
 end
 
 -- Initialize settings with a simplified approach
@@ -145,39 +149,6 @@ function Config:InitializeOptions()
         _G[self:GetName() .. "Text"]:SetText(value)
 
         Config.barSpacing = value
-        Config:Save()
-
-        -- Update the UI if Core is available
-        if ST.Core and ST.Core.CreateBars then
-            ST.Core:CreateBars()
-        end
-    end)
-
-    -- Add bar height slider
-    yPos = yPos - 40
-    local heightText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    heightText:SetPoint("TOPLEFT", 16, yPos)
-    heightText:SetText("Bar Height:")
-
-    yPos = yPos - 20
-    local heightSlider = CreateFrame("Slider", "PeaversDynamicStatsHeightSlider", panel, "OptionsSliderTemplate")
-    heightSlider:SetPoint("TOPLEFT", 25, yPos)
-    heightSlider:SetWidth(200)
-    heightSlider:SetMinMaxValues(10, 30)
-    heightSlider:SetValueStep(1)
-    heightSlider:SetValue(Config.barHeight)
-
-    -- Set slider text
-    _G[heightSlider:GetName() .. "Low"]:SetText("10")
-    _G[heightSlider:GetName() .. "High"]:SetText("30")
-    _G[heightSlider:GetName() .. "Text"]:SetText(Config.barHeight)
-
-    heightSlider:SetScript("OnValueChanged", function(self, value)
-        -- Round to nearest integer
-        value = math.floor(value + 0.5)
-        _G[self:GetName() .. "Text"]:SetText(value)
-
-        Config.barHeight = value
         Config:Save()
 
         -- Update the UI if Core is available
@@ -266,12 +237,45 @@ function Config:InitializeOptions()
         if ST.Core and ST.Core.frame then
             ST.Core.frame:SetWidth(value)
 
-            -- Update all bar widths
+            -- Update all bars
             if ST.Core.bars then
                 for _, bar in ipairs(ST.Core.bars) do
-                    bar.frame:SetWidth(value - 20)  -- Account for frame padding
+                    bar:UpdateWidth()
                 end
             end
+        end
+    end)
+
+    -- Add bar height slider
+    yPos = yPos - 40
+    local barHeightText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    barHeightText:SetPoint("TOPLEFT", 16, yPos)
+    barHeightText:SetText("Bar Height:")
+
+    yPos = yPos - 20
+    local barHeightSlider = CreateFrame("Slider", "PeaversDynamicStatsBarHeightSlider", panel, "OptionsSliderTemplate")
+    barHeightSlider:SetPoint("TOPLEFT", 25, yPos)
+    barHeightSlider:SetWidth(200)
+    barHeightSlider:SetMinMaxValues(10, 40)
+    barHeightSlider:SetValueStep(1)
+    barHeightSlider:SetValue(Config.barHeight)
+
+    -- Set slider text
+    _G[barHeightSlider:GetName() .. "Low"]:SetText("10")
+    _G[barHeightSlider:GetName() .. "High"]:SetText("40")
+    _G[barHeightSlider:GetName() .. "Text"]:SetText(Config.barHeight)
+
+    barHeightSlider:SetScript("OnValueChanged", function(self, value)
+        -- Round to nearest integer
+        value = math.floor(value + 0.5)
+        _G[self:GetName() .. "Text"]:SetText(value)
+
+        Config.barHeight = value
+        Config:Save()
+
+        -- Update the bars if Core is available
+        if ST.Core and ST.Core.CreateBars then
+            ST.Core:CreateBars()
         end
     end)
 

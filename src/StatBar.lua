@@ -19,6 +19,7 @@ function StatBar:New(parent, name, statType)
     obj.maxValue = 100
     obj.targetValue = 0
     obj.smoothing = true
+    obj.yOffset = 0 -- Add this to store the vertical position
     obj.frame = obj:CreateFrame(parent)
 
     -- Initialize the animation system
@@ -172,7 +173,10 @@ end
 
 -- Set position relative to parent
 function StatBar:SetPosition(x, y)
+    self.yOffset = y -- Store the yOffset for later repositioning
+    self.frame:ClearAllPoints()
     self.frame:SetPoint("TOPLEFT", self.frame:GetParent(), "TOPLEFT", x, y)
+    self.frame:SetPoint("TOPRIGHT", self.frame:GetParent(), "TOPRIGHT", 0, y)
 end
 
 -- Set highlight/select state
@@ -207,25 +211,12 @@ end
 function StatBar:UpdateHeight()
     -- Update the height of the bar frame
     self.frame:SetHeight(ST.Config.barHeight)
-
-    -- Re-anchor if needed
-    -- This may not be necessary if the parent layout handles positioning
-    self:SetPosition(0, self.frame._yOffset or 0)
-end
-
-
--- Method to update bar height
-function StatBar:UpdateHeight()
-    -- Update the height of the bar frame
-    self.frame:SetHeight(ST.Config.barHeight)
-
-    -- Re-anchor if needed
-    -- This may not be necessary if the parent layout handles positioning
-    self:SetPosition(0, self.frame._yOffset or 0)
 end
 
 -- Method to update bar width
 function StatBar:UpdateWidth()
-    -- Update the width of the bar frame to match the configured bar width
-    self.frame:SetWidth(ST.Config.barWidth)
+    -- Update bar width by reconfiguring the anchors
+    self.frame:ClearAllPoints()
+    self.frame:SetPoint("TOPLEFT", self.frame:GetParent(), "TOPLEFT", 0, self.yOffset)
+    self.frame:SetPoint("TOPRIGHT", self.frame:GetParent(), "TOPRIGHT", 0, self.yOffset)
 end

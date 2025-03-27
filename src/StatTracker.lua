@@ -40,7 +40,7 @@ function Core:CreateTitleBar()
     title:SetPoint("LEFT", titleBar, "LEFT", 5, 0)
     title:SetText("Secondary Stats")
 
-    -- Set the title text to white instead of class color
+    -- Set the title text to white
     title:SetTextColor(1, 1, 1)
 
     -- Add vertical line separator after title text
@@ -76,13 +76,13 @@ end
 
 -- Initialize the addon
 function Core:Initialize()
-   self.previousValues = {}
+    self.previousValues = {}
 
-  -- Load config first
-   ST.Config:Load()
+    -- Load config first
+    ST.Config:Load()
 
-   -- Initialize the options panel
-   ST.Config:InitializeOptions()
+    -- Initialize the options panel
+    ST.Config:InitializeOptions()
 
     -- Create main frame
     self.frame = CreateFrame("Frame", "PeaversDynamicStatsFrame", UIParent, "BackdropTemplate")
@@ -96,7 +96,7 @@ function Core:Initialize()
     self.frame:SetBackdropColor(ST.Config.bgColor.r, ST.Config.bgColor.g, ST.Config.bgColor.b, ST.Config.bgAlpha)
     self.frame:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Create title bar using our new method
+    -- Create title bar
     local titleBar = self:CreateTitleBar()
 
     -- Create content frame
@@ -143,12 +143,6 @@ function Core:CreateBars()
             local bar = ST.StatBar:New(self.contentFrame, statNames[statType], statType)
             bar:SetPosition(0, yOffset)
 
-            -- Update the bar width to match the configured bar width
-            bar.frame:SetWidth(ST.Config.barWidth)
-
-            -- Store yOffset for potential bar height updates
-            bar.frame._yOffset = yOffset
-
             -- Update stat values
             local value = ST.Utils:GetStatValue(statType)
             bar:Update(value)
@@ -163,7 +157,12 @@ function Core:CreateBars()
 
     -- Adjust frame height based on number of bars
     local contentHeight = math.abs(yOffset)
-    self.frame:SetHeight(contentHeight + 20) -- Add title bar height
+    if contentHeight == 0 then
+        -- Default height if no bars are shown
+        self.frame:SetHeight(20) -- Just title bar
+    else
+        self.frame:SetHeight(contentHeight + 20) -- Add title bar height
+    end
 
     -- Set frame width based on configuration
     self.frame:SetWidth(ST.Config.frameWidth)

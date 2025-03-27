@@ -31,6 +31,9 @@ function Core:CreateTitleBar()
     titleBar:SetBackdropColor(ST.Config.bgColor.r, ST.Config.bgColor.g, ST.Config.bgColor.b, ST.Config.bgAlpha)
     titleBar:SetBackdropBorderColor(0, 0, 0, 1)
 
+    -- Store reference to title bar for later updates
+    self.titleBar = titleBar
+
     -- Add title text
     local title = titleBar:CreateFontString(nil, "OVERLAY")
     title:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
@@ -137,14 +140,17 @@ function Core:CreateBars()
     }
 
     -- Create bars for enabled stats
-    local yOffset = 0 -- Changed from -5 to 0
+    local yOffset = 0
     for _, statType in ipairs(statOrder) do
         if ST.Config.showStats[statType] then
             local bar = ST.StatBar:New(self.contentFrame, statNames[statType], statType)
-            bar:SetPosition(0, yOffset) -- Changed from 10 to 0
+            bar:SetPosition(0, yOffset)
 
             -- Update the bar width to match the frame width
             bar.frame:SetWidth(self.contentFrame:GetWidth())
+
+            -- Store yOffset for potential bar height updates
+            bar.frame._yOffset = yOffset
 
             -- Update stat values
             local value, maxValue = ST.Utils:GetStatValue(statType, primaryStat)
@@ -153,14 +159,14 @@ function Core:CreateBars()
             -- Add to bar collection
             table.insert(self.bars, bar)
 
-            -- Adjust offset for next bar using the configured spacing
+            -- Adjust offset for next bar using the configured height and spacing
             yOffset = yOffset - (ST.Config.barHeight + ST.Config.barSpacing)
         end
     end
 
     -- Adjust frame height based on number of bars
     local contentHeight = math.abs(yOffset)
-    self.frame:SetHeight(contentHeight + 20) -- Add title bar height (also removing the +5 padding)
+    self.frame:SetHeight(contentHeight + 20) -- Add title bar height
 end
 
 -- Update all bars with latest stat values
@@ -239,6 +245,7 @@ frame:SetScript("OnUpdate", function(self, elapsed) Core:OnUpdate(elapsed) end)
 -- Slash command to toggle visibility
 SLASH_PEAVERSDYNAMICSTATS1 = "/pds"
 SLASH_PEAVERSDYNAMICSTATS2 = "/dynstats"
+SLASH_PEAVERSDYNAMICSTATS3 = "/st"
 SlashCmdList["PEAVERSDYNAMICSTATS"] = function(msg)
     if msg == "config" or msg == "options" then
         ST.Config:OpenOptions()

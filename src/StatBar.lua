@@ -245,15 +245,25 @@ function StatBar:SetSelected(selected)
     end
 end
 
--- Add this new method to StatBar.lua
+-- Method to update the font
 function StatBar:UpdateFont()
     -- Update the font for both text elements
     self.frame.valueText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
     self.frame.nameText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
 end
 
--- Add this new method to update bar texture
+-- Method to update bar texture
 function StatBar:UpdateTexture()
     -- Update the texture for the status bar
     self.frame.bar:SetStatusBarTexture(ST.Config.barTexture)
+end
+
+-- Method to update bar height
+function StatBar:UpdateHeight()
+    -- Update the height of the bar frame
+    self.frame:SetHeight(ST.Config.barHeight)
+
+    -- Re-anchor if needed
+    -- This may not be necessary if the parent layout handles positioning
+    self:SetPosition(0, self.frame._yOffset or 0)
 end

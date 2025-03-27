@@ -60,6 +60,7 @@ function Config:Save()
     PeaversDynamicStatsDB.bgColor = self.bgColor
     PeaversDynamicStatsDB.showStats = self.showStats
     PeaversDynamicStatsDB.barSpacing = self.barSpacing
+    PeaversDynamicStatsDB.barHeight = self.barHeight
 end
 
 -- Function to load configuration
@@ -75,6 +76,7 @@ function Config:Load()
     if PeaversDynamicStatsDB.bgColor then self.bgColor = PeaversDynamicStatsDB.bgColor end
     if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
     if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
+    if PeaversDynamicStatsDB.barHeight then self.barHeight = PeaversDynamicStatsDB.barHeight end
 end
 
 -- Initialize settings with a simplified approach
@@ -159,6 +161,87 @@ function Config:InitializeOptions()
         end
     end)
 
+    -- Add bar height slider
+    yPos = yPos - 40
+    local heightText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    heightText:SetPoint("TOPLEFT", 16, yPos)
+    heightText:SetText("Bar Height:")
+
+    yPos = yPos - 20
+    local heightSlider = CreateFrame("Slider", "PeaversDynamicStatsHeightSlider", panel, "OptionsSliderTemplate")
+    heightSlider:SetPoint("TOPLEFT", 25, yPos)
+    heightSlider:SetWidth(200)
+    heightSlider:SetMinMaxValues(10, 30)
+    heightSlider:SetValueStep(1)
+    heightSlider:SetValue(Config.barHeight)
+
+    -- Set slider text
+    _G[heightSlider:GetName() .. "Low"]:SetText("10")
+    _G[heightSlider:GetName() .. "High"]:SetText("30")
+    _G[heightSlider:GetName() .. "Text"]:SetText(Config.barHeight)
+
+    heightSlider:SetScript("OnValueChanged", function(self, value)
+        -- Round to nearest integer
+        value = math.floor(value + 0.5)
+        _G[self:GetName() .. "Text"]:SetText(value)
+
+        Config.barHeight = value
+        Config:Save()
+
+        -- Update the UI if Core is available
+        if ST.Core and ST.Core.CreateBars then
+            ST.Core:CreateBars()
+        end
+    end)
+
+    -- Add background opacity slider
+    yPos = yPos - 40
+    local bgAlphaText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    bgAlphaText:SetPoint("TOPLEFT", 16, yPos)
+    bgAlphaText:SetText("Background Opacity:")
+
+    yPos = yPos - 20
+    local bgAlphaSlider = CreateFrame("Slider", "PeaversDynamicStatsBGAlphaSlider", panel, "OptionsSliderTemplate")
+    bgAlphaSlider:SetPoint("TOPLEFT", 25, yPos)
+    bgAlphaSlider:SetWidth(200)
+    bgAlphaSlider:SetMinMaxValues(0, 1)
+    bgAlphaSlider:SetValueStep(0.05)
+    bgAlphaSlider:SetValue(Config.bgAlpha)
+
+    -- Set slider text
+    _G[bgAlphaSlider:GetName() .. "Low"]:SetText("0%")
+    _G[bgAlphaSlider:GetName() .. "High"]:SetText("100%")
+    _G[bgAlphaSlider:GetName() .. "Text"]:SetText(math.floor(Config.bgAlpha * 100) .. "%")
+
+    bgAlphaSlider:SetScript("OnValueChanged", function(self, value)
+        -- Round to nearest 0.05
+        value = math.floor(value * 20 + 0.5) / 20
+        _G[self:GetName() .. "Text"]:SetText(math.floor(value * 100) .. "%")
+
+        Config.bgAlpha = value
+        Config:Save()
+
+        -- Update the background alpha if Core is available
+        if ST.Core and ST.Core.frame then
+            ST.Core.frame:SetBackdropColor(
+                Config.bgColor.r,
+                Config.bgColor.g,
+                Config.bgColor.b,
+                Config.bgAlpha
+            )
+
+            -- Also update title bar if it exists
+            if ST.Core.titleBar then
+                ST.Core.titleBar:SetBackdropColor(
+                    Config.bgColor.r,
+                    Config.bgColor.g,
+                    Config.bgColor.b,
+                    Config.bgAlpha
+                )
+            end
+        end
+    end)
+
     -- Add font dropdown section
     yPos = yPos - 40
     local fontText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
@@ -230,6 +313,12 @@ function Config:InitializeOptions()
     -- Register with Settings
     categoryID = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
     Settings.RegisterAddOnCategory(categoryID)
+
+    -- For compatibility with pre-Dragonflight UI
+    -- Check if InterfaceOptions exists (pre-Dragonflight)
+    if InterfaceOptions_AddCategory then
+        InterfaceOptions_AddCategory(panel)
+    end
 
     return panel
 end

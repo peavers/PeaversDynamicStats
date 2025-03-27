@@ -1,10 +1,5 @@
---[[
-    StatBar.lua - Class for the stat bars (Details!-inspired)
-]]
-
 local addonName, ST = ...
 
--- Create the StatBar class
 ST.StatBar = {}
 local StatBar = ST.StatBar
 
@@ -19,7 +14,7 @@ function StatBar:New(parent, name, statType)
     obj.maxValue = 100
     obj.targetValue = 0
     obj.smoothing = true
-    obj.yOffset = 0 -- Add this to store the vertical position
+    obj.yOffset = 0
     obj.frame = obj:CreateFrame(parent)
 
     -- Initialize the animation system
@@ -51,7 +46,7 @@ function StatBar:CreateFrame(parent)
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     frame:SetSize(ST.Config.barWidth, ST.Config.barHeight)
 
-    -- Background for the bar (Details!-style)
+    -- Background for the bar
     local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     bg:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
@@ -95,14 +90,6 @@ function StatBar:CreateFrame(parent)
     nameText:SetTextColor(1, 1, 1)
     frame.nameText = nameText
 
-    -- Class/spec icon (for future expansion)
-    local icon = bar:CreateTexture(nil, "OVERLAY")
-    icon:SetSize(16, 16)
-    icon:SetPoint("LEFT", bar, "LEFT", 4, 0)
-    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-    icon:Hide() -- Hide by default, enable if needed
-    frame.icon = icon
-
     return frame
 end
 
@@ -142,8 +129,8 @@ function StatBar:AnimateToValue(newValue)
     -- Get current value
     local currentValue = self.frame.bar:GetValue()
 
-    -- Only animate if there's a significant difference (1% or more)
-    if math.abs(newValue - currentValue) >= 1.0 then
+    -- Only animate if there's a significant difference (0.5% or more)
+    if math.abs(newValue - currentValue) >= 0.5 then
         -- Set up animation properties
         self.valueAnimation.startValue = currentValue
         self.valueAnimation.changeValue = newValue - currentValue
@@ -156,7 +143,6 @@ end
 
 -- Get color for stat type
 function StatBar:GetColorForStat(statType)
-    -- Details!-inspired colors with higher saturation
     local colors = {
         HASTE = { 0.0, 0.9, 0.9 },        -- Cyan
         CRIT = { 0.9, 0.9, 0.0 },         -- Yellow
@@ -173,7 +159,7 @@ end
 
 -- Set position relative to parent
 function StatBar:SetPosition(x, y)
-    self.yOffset = y -- Store the yOffset for later repositioning
+    self.yOffset = y
     self.frame:ClearAllPoints()
     self.frame:SetPoint("TOPLEFT", self.frame:GetParent(), "TOPLEFT", x, y)
     self.frame:SetPoint("TOPRIGHT", self.frame:GetParent(), "TOPRIGHT", 0, y)

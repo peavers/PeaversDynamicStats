@@ -1,12 +1,26 @@
-## Interface: 110100
-## Title: PeaversDynamicStats
-## Notes: Displays primary player stats as horizontal bars
-## Author: peavers
-## Version: 1.0.0
-## SavedVariables: PeaversDynamicStatsDB
+## Interface: 100200
+## Title: Secondary Stat Tracker
+## Notes: Displays secondary stats (haste, crit, mastery, versatility) in a movable frame
+## Author: YourName
+## Version: 1.0
+## SavedVariables: StatTrackerDB
 
-src/UI.lua
-src/Config.lua
-src/Utils.lua
-src/StatBar.lua
-src/StatTracker.lua
+# Main
+src\Main.lua
+
+# UI first (since Config depends on it)
+src\UI\UI.lua
+
+# Utils
+src\Utils\Utils.lua
+src\Utils\Config.lua
+
+# Core
+src\Core\Core.lua
+src\Core\Events.lua
+src\Core\SlashCommands.lua
+
+# UI
+src\UI\StatBar.lua
+src\UI\TitleBar.lua
+src\UI\Bars.lua

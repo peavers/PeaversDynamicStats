@@ -1,7 +1,3 @@
---[[
-    UI.lua - UI utility class for StatTracker
-]]
-
 local addonName, ST = ...
 
 -- Create UI namespace

@@ -1,7 +1,4 @@
---[[
-    Config.lua - Configuration settings for StatTracker
-]]
-
+-- At the beginning of Config.lua, add this check:
 local addonName, ST = ...
 
 -- Create Config namespace with default values
@@ -26,7 +23,7 @@ ST.Config = {
     -- Other settings
     barTexture = "Interface\\TargetingFrame\\UI-StatusBar",
     bgAlpha = 0.8,
-    bgColor = {r = 0, g = 0, b = 0},
+    bgColor = { r = 0, g = 0, b = 0 },
     updateInterval = 0.5,
     combatUpdateInterval = 0.2,
     showOnLogin = true,
@@ -41,53 +38,17 @@ ST.Config = {
 
 -- Local variables
 local Config = ST.Config
-local UI = ST.UI -- Reference to the UI utility class
-local categoryID
-
--- Save configuration
-function Config:Save()
-    if not PeaversDynamicStatsDB then
-        PeaversDynamicStatsDB = {}
-    end
-
-    PeaversDynamicStatsDB.fontFace = self.fontFace
-    PeaversDynamicStatsDB.framePoint = self.framePoint
-    PeaversDynamicStatsDB.frameX = self.frameX
-    PeaversDynamicStatsDB.frameY = self.frameY
-    PeaversDynamicStatsDB.frameWidth = self.frameWidth
-    PeaversDynamicStatsDB.barWidth = self.barWidth
-    PeaversDynamicStatsDB.barHeight = self.barHeight
-    PeaversDynamicStatsDB.barTexture = self.barTexture
-    PeaversDynamicStatsDB.bgAlpha = self.bgAlpha
-    PeaversDynamicStatsDB.bgColor = self.bgColor
-    PeaversDynamicStatsDB.showStats = self.showStats
-    PeaversDynamicStatsDB.barSpacing = self.barSpacing
-    PeaversDynamicStatsDB.showTitleBar = self.showTitleBar
-    PeaversDynamicStatsDB.lockPosition = self.lockPosition
-end
-
--- Load configuration
-function Config:Load()
-    if not PeaversDynamicStatsDB then return end
-
-    if PeaversDynamicStatsDB.fontFace then self.fontFace = PeaversDynamicStatsDB.fontFace end
-    if PeaversDynamicStatsDB.framePoint then self.framePoint = PeaversDynamicStatsDB.framePoint end
-    if PeaversDynamicStatsDB.frameX then self.frameX = PeaversDynamicStatsDB.frameX end
-    if PeaversDynamicStatsDB.frameY then self.frameY = PeaversDynamicStatsDB.frameY end
-    if PeaversDynamicStatsDB.frameWidth then self.frameWidth = PeaversDynamicStatsDB.frameWidth end
-    if PeaversDynamicStatsDB.barWidth then self.barWidth = PeaversDynamicStatsDB.barWidth end
-    if PeaversDynamicStatsDB.barHeight then self.barHeight = PeaversDynamicStatsDB.barHeight end
-    if PeaversDynamicStatsDB.barTexture then self.barTexture = PeaversDynamicStatsDB.barTexture end
-    if PeaversDynamicStatsDB.bgAlpha then self.bgAlpha = PeaversDynamicStatsDB.bgAlpha end
-    if PeaversDynamicStatsDB.bgColor then self.bgColor = PeaversDynamicStatsDB.bgColor end
-    if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
-    if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
-    if PeaversDynamicStatsDB.showTitleBar ~= nil then self.showTitleBar = PeaversDynamicStatsDB.showTitleBar end
-    if PeaversDynamicStatsDB.lockPosition ~= nil then self.lockPosition = PeaversDynamicStatsDB.lockPosition end
-end
+local UI -- Will be assigned when InitializeOptions is called
 
 -- Initialize options panel
 function Config:InitializeOptions()
+    -- Ensure UI is loaded
+    UI = ST.UI
+    if not UI then
+        print("ERROR: UI module not loaded. Cannot initialize options.")
+        return
+    end
+
     local panel = CreateFrame("Frame")
     panel.name = "PeaversDynamicStats"
 
@@ -109,7 +70,6 @@ function Config:InitializeOptions()
     subtitle:SetText("Configuration options for the dynamic stats display")
     yPos = yPos - 40
 
-    -- Create standardized stat checkbox creator
     local function CreateStatCheckbox(statKey, statName, y)
         local onClick = function(self)
             Config.showStats[statKey] = self:GetChecked()
@@ -121,12 +81,12 @@ function Config:InitializeOptions()
 
         return UI:CreateCheckbox(
                 content,
-                "PeaversStat"..statKey.."Checkbox",
+                "PeaversStat" .. statKey .. "Checkbox",
                 statName,
                 25,
                 y,
                 Config.showStats[statKey],
-                {1, 1, 1},
+                { 1, 1, 1 },
                 onClick
         )
     end
@@ -229,7 +189,7 @@ function Config:InitializeOptions()
             40,
             yPos,
             Config.showTitleBar,
-            {1, 1, 1},
+            { 1, 1, 1 },
             function(self)
                 Config.showTitleBar = self:GetChecked()
                 Config:Save()
@@ -248,7 +208,7 @@ function Config:InitializeOptions()
             40,
             yPos,
             Config.lockPosition,
-            {1, 1, 1},
+            { 1, 1, 1 },
             function(self)
                 Config.lockPosition = self:GetChecked()
                 Config:Save()
@@ -382,6 +342,78 @@ function Config:InitializeOptions()
     return panel
 end
 
+-- Save configuration
+function Config:Save()
+    if not PeaversDynamicStatsDB then
+        PeaversDynamicStatsDB = {}
+    end
+
+    PeaversDynamicStatsDB.fontFace = self.fontFace
+    PeaversDynamicStatsDB.framePoint = self.framePoint
+    PeaversDynamicStatsDB.frameX = self.frameX
+    PeaversDynamicStatsDB.frameY = self.frameY
+    PeaversDynamicStatsDB.frameWidth = self.frameWidth
+    PeaversDynamicStatsDB.barWidth = self.barWidth
+    PeaversDynamicStatsDB.barHeight = self.barHeight
+    PeaversDynamicStatsDB.barTexture = self.barTexture
+    PeaversDynamicStatsDB.bgAlpha = self.bgAlpha
+    PeaversDynamicStatsDB.bgColor = self.bgColor
+    PeaversDynamicStatsDB.showStats = self.showStats
+    PeaversDynamicStatsDB.barSpacing = self.barSpacing
+    PeaversDynamicStatsDB.showTitleBar = self.showTitleBar
+    PeaversDynamicStatsDB.lockPosition = self.lockPosition
+end
+
+-- Load configuration
+function Config:Load()
+    if not PeaversDynamicStatsDB then
+        return
+    end
+
+    if PeaversDynamicStatsDB.fontFace then
+        self.fontFace = PeaversDynamicStatsDB.fontFace
+    end
+    if PeaversDynamicStatsDB.framePoint then
+        self.framePoint = PeaversDynamicStatsDB.framePoint
+    end
+    if PeaversDynamicStatsDB.frameX then
+        self.frameX = PeaversDynamicStatsDB.frameX
+    end
+    if PeaversDynamicStatsDB.frameY then
+        self.frameY = PeaversDynamicStatsDB.frameY
+    end
+    if PeaversDynamicStatsDB.frameWidth then
+        self.frameWidth = PeaversDynamicStatsDB.frameWidth
+    end
+    if PeaversDynamicStatsDB.barWidth then
+        self.barWidth = PeaversDynamicStatsDB.barWidth
+    end
+    if PeaversDynamicStatsDB.barHeight then
+        self.barHeight = PeaversDynamicStatsDB.barHeight
+    end
+    if PeaversDynamicStatsDB.barTexture then
+        self.barTexture = PeaversDynamicStatsDB.barTexture
+    end
+    if PeaversDynamicStatsDB.bgAlpha then
+        self.bgAlpha = PeaversDynamicStatsDB.bgAlpha
+    end
+    if PeaversDynamicStatsDB.bgColor then
+        self.bgColor = PeaversDynamicStatsDB.bgColor
+    end
+    if PeaversDynamicStatsDB.showStats then
+        self.showStats = PeaversDynamicStatsDB.showStats
+    end
+    if PeaversDynamicStatsDB.barSpacing then
+        self.barSpacing = PeaversDynamicStatsDB.barSpacing
+    end
+    if PeaversDynamicStatsDB.showTitleBar ~= nil then
+        self.showTitleBar = PeaversDynamicStatsDB.showTitleBar
+    end
+    if PeaversDynamicStatsDB.lockPosition ~= nil then
+        self.lockPosition = PeaversDynamicStatsDB.lockPosition
+    end
+end
+
 -- Function to get available fonts in alphabetical order
 function Config:GetFonts()
     local fonts = {
@@ -404,10 +436,12 @@ function Config:GetFonts()
     -- Sort the fonts table by display name
     local sortedFonts = {}
     for path, name in pairs(fonts) do
-        table.insert(sortedFonts, {path = path, name = name})
+        table.insert(sortedFonts, { path = path, name = name })
     end
 
-    table.sort(sortedFonts, function(a, b) return a.name < b.name end)
+    table.sort(sortedFonts, function(a, b)
+        return a.name < b.name
+    end)
 
     -- Rebuild the fonts table
     local result = {}
@@ -450,10 +484,12 @@ function Config:GetBarTextures()
     -- Sort the textures table by display name
     local sortedTextures = {}
     for path, name in pairs(textures) do
-        table.insert(sortedTextures, {path = path, name = name})
+        table.insert(sortedTextures, { path = path, name = name })
     end
 
-    table.sort(sortedTextures, function(a, b) return a.name < b.name end)
+    table.sort(sortedTextures, function(a, b)
+        return a.name < b.name
+    end)
 
     -- Rebuild the textures table
     local result = {}

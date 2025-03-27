@@ -12,7 +12,7 @@ ST.Config = {
     framePoint = "RIGHT",
     frameX = -20,
     frameY = 0,
-    lockPosition = false, -- New option
+    lockPosition = false,
 
     -- Bar settings
     barWidth = 230,
@@ -41,26 +41,10 @@ ST.Config = {
 
 -- Local variables
 local Config = ST.Config
+local UI = ST.UI -- Reference to the UI utility class
 local categoryID
 
--- Safe text setting function
-local function SetText(fontString, text)
-    if fontString and type(text) == "string" then
-        fontString:SetText(text)
-        return true
-    end
-    return false
-end
-
--- Safe global access function
-local function GetGlobal(name)
-    if name and type(name) == "string" then
-        return _G[name]
-    end
-    return nil
-end
-
--- Add to the Config:Save() function:
+-- Save configuration
 function Config:Save()
     if not PeaversDynamicStatsDB then
         PeaversDynamicStatsDB = {}
@@ -79,10 +63,10 @@ function Config:Save()
     PeaversDynamicStatsDB.showStats = self.showStats
     PeaversDynamicStatsDB.barSpacing = self.barSpacing
     PeaversDynamicStatsDB.showTitleBar = self.showTitleBar
-    PeaversDynamicStatsDB.lockPosition = self.lockPosition -- New line
+    PeaversDynamicStatsDB.lockPosition = self.lockPosition
 end
 
--- Add to the Config:Load() function:
+-- Load configuration
 function Config:Load()
     if not PeaversDynamicStatsDB then return end
 
@@ -99,31 +83,18 @@ function Config:Load()
     if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
     if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
     if PeaversDynamicStatsDB.showTitleBar ~= nil then self.showTitleBar = PeaversDynamicStatsDB.showTitleBar end
-    if PeaversDynamicStatsDB.lockPosition ~= nil then self.lockPosition = PeaversDynamicStatsDB.lockPosition end -- New line
+    if PeaversDynamicStatsDB.lockPosition ~= nil then self.lockPosition = PeaversDynamicStatsDB.lockPosition end
 end
 
-
-local function CreateScrollFrame(parent)
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 16, -16)  -- Move up to capture the whole area
-    scrollFrame:SetPoint("BOTTOMRIGHT", -32, 16)
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    scrollFrame:SetScrollChild(content)
-    content:SetWidth(scrollFrame:GetWidth() - 16)
-    content:SetHeight(1) -- Will be adjusted dynamically
-
-    return scrollFrame, content
-end
-
+-- Initialize options panel
 function Config:InitializeOptions()
     local panel = CreateFrame("Frame")
     panel.name = "PeaversDynamicStats"
 
     -- Create scrolling content frame
-    local scrollFrame, content = CreateScrollFrame(panel)
+    local scrollFrame, content = UI:CreateScrollFrame(panel)
 
-    -- Move title and subtitle inside the content frame
+    -- Start position
     local yPos = 0
 
     -- Title
@@ -136,91 +107,56 @@ function Config:InitializeOptions()
     local subtitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     subtitle:SetPoint("TOPLEFT", 25, yPos)
     subtitle:SetText("Configuration options for the dynamic stats display")
-    yPos = yPos - 40  -- Extra space after subtitle
+    yPos = yPos - 40
 
-    -- Helper function to create a stat checkbox
-    local function CreateStatCheckbox(statKey, statName, yPos)
-        local checkbox = CreateFrame("CheckButton", "PeaversStat"..statKey.."Checkbox", content, "InterfaceOptionsCheckButtonTemplate")
-        checkbox:SetPoint("TOPLEFT", 25, yPos)
-
-        -- Get and set the text
-        local textObj = checkbox.Text
-        if not textObj and checkbox:GetName() then
-            textObj = GetGlobal(checkbox:GetName().."Text")
-        end
-
-        if textObj then
-            textObj:SetText(statName)
-            textObj:SetTextColor(1, 0.82, 0)  -- Gold color
-        end
-
-        -- Set the initial state
-        if Config.showStats[statKey] ~= nil then
-            checkbox:SetChecked(Config.showStats[statKey])
-        end
-
-        -- OnClick handler
-        checkbox:SetScript("OnClick", function(self)
+    -- Create standardized stat checkbox creator
+    local function CreateStatCheckbox(statKey, statName, y)
+        local onClick = function(self)
             Config.showStats[statKey] = self:GetChecked()
             Config:Save()
             if ST.Core and ST.Core.CreateBars then
                 ST.Core:CreateBars()
             end
-        end)
+        end
 
-        return checkbox
+        return UI:CreateCheckbox(
+                content,
+                "PeaversStat"..statKey.."Checkbox",
+                statName,
+                25,
+                y,
+                Config.showStats[statKey],
+                {1, 1, 1},
+                onClick
+        )
     end
 
     -- General section
-    local generalText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    generalText:SetPoint("TOPLEFT", 25, yPos)  -- Aligned with content
-    generalText:SetText("General")
-    generalText:SetTextColor(1, 0.82, 0)
-    generalText:SetWidth(400)  -- Gold color
+    local _, newY = UI:CreateSectionHeader(content, "General", 25, yPos)
+    yPos = newY
 
     -- Stat checkboxes
-    yPos = yPos - 25
-    CreateStatCheckbox("HASTE", "Haste", yPos)
-    yPos = yPos - 25
-    CreateStatCheckbox("CRIT", "Critical Strike", yPos)
-    yPos = yPos - 25
-    CreateStatCheckbox("MASTERY", "Mastery", yPos)
-    yPos = yPos - 25
-    CreateStatCheckbox("VERSATILITY", "Versatility", yPos)
-    yPos = yPos - 50  -- Extra spacing between sections
+    local _, newY = CreateStatCheckbox("HASTE", "Haste", yPos)
+    yPos = newY
+    local _, newY = CreateStatCheckbox("CRIT", "Critical Strike", yPos)
+    yPos = newY
+    local _, newY = CreateStatCheckbox("MASTERY", "Mastery", yPos)
+    yPos = newY
+    local _, newY = CreateStatCheckbox("VERSATILITY", "Versatility", yPos)
+    yPos = newY - 25 -- Extra spacing between sections
 
     -- Bar Settings section
-    local barSettingsText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    barSettingsText:SetPoint("TOPLEFT", 25, yPos)  -- Aligned with content
-    barSettingsText:SetText("Bar Settings")
-    barSettingsText:SetTextColor(1, 0.82, 0)
-    barSettingsText:SetWidth(400)  -- Gold color
-    yPos = yPos - 25
+    local _, newY = UI:CreateSectionHeader(content, "Bar Settings", 25, yPos)
+    yPos = newY
 
     -- Bar spacing slider
-    local spacingLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    spacingLabel:SetPoint("TOPLEFT", 25, yPos)
-    spacingLabel:SetText("Bar Spacing: " .. Config.barSpacing)
-    yPos = yPos - 20
+    local spacingLabel, newY = UI:CreateLabel(content, "Bar Spacing: " .. Config.barSpacing, 25, yPos)
+    yPos = newY
 
-    local spacingSlider = CreateFrame("Slider", "PeaversSpacingSlider", content, "OptionsSliderTemplate")
-    spacingSlider:SetPoint("TOPLEFT", 25, yPos)
-    spacingSlider:SetWidth(400)
-    spacingSlider:SetMinMaxValues(-5, 10)
-    spacingSlider:SetValueStep(1)
-    spacingSlider:SetValue(Config.barSpacing)
-
-    -- Get slider text elements
-    local     sliderName = spacingSlider:GetName()
-    if sliderName then
-        local lowText = GetGlobal(sliderName.."Low")
-        local highText = GetGlobal(sliderName.."High")
-        local valueText = GetGlobal(sliderName.."Text")
-
-        if lowText then lowText:SetText("") end
-        if highText then highText:SetText("") end
-        if valueText then valueText:SetText("") end
-    end
+    local spacingSlider, newY = UI:CreateSlider(
+            content, "PeaversSpacingSlider", -5, 10, 1, 25, yPos, Config.barSpacing
+    )
+    yPos = newY
 
     spacingSlider:SetScript("OnValueChanged", function(self, value)
         local roundedValue = math.floor(value + 0.5)
@@ -232,31 +168,14 @@ function Config:InitializeOptions()
         end
     end)
 
-    yPos = yPos - 40
-
     -- Bar height slider
-    local heightLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", 25, yPos)
-    heightLabel:SetText("Bar Height: " .. Config.barHeight)
-    yPos = yPos - 20
+    local heightLabel, newY = UI:CreateLabel(content, "Bar Height: " .. Config.barHeight, 25, yPos)
+    yPos = newY
 
-    local heightSlider = CreateFrame("Slider", "PeaversHeightSlider", content, "OptionsSliderTemplate")
-    heightSlider:SetPoint("TOPLEFT", 25, yPos)
-    heightSlider:SetWidth(400)
-    heightSlider:SetMinMaxValues(10, 40)
-    heightSlider:SetValueStep(1)
-    heightSlider:SetValue(Config.barHeight)
-
-    sliderName = heightSlider:GetName()
-    if sliderName then
-        local lowText = GetGlobal(sliderName.."Low")
-        local highText = GetGlobal(sliderName.."High")
-        local valueText = GetGlobal(sliderName.."Text")
-
-        if lowText then lowText:SetText("") end
-        if highText then highText:SetText("") end
-        if valueText then valueText:SetText("") end
-    end
+    local heightSlider, newY = UI:CreateSlider(
+            content, "PeaversHeightSlider", 10, 40, 1, 25, yPos, Config.barHeight
+    )
+    yPos = newY
 
     heightSlider:SetScript("OnValueChanged", function(self, value)
         local roundedValue = math.floor(value + 0.5)
@@ -268,31 +187,14 @@ function Config:InitializeOptions()
         end
     end)
 
-    yPos = yPos - 40
-
     -- Frame width slider
-    local widthLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    widthLabel:SetPoint("TOPLEFT", 25, yPos)
-    widthLabel:SetText("Frame Width: " .. Config.frameWidth)
-    yPos = yPos - 20
+    local widthLabel, newY = UI:CreateLabel(content, "Frame Width: " .. Config.frameWidth, 25, yPos)
+    yPos = newY
 
-    local widthSlider = CreateFrame("Slider", "PeaversWidthSlider", content, "OptionsSliderTemplate")
-    widthSlider:SetPoint("TOPLEFT", 25, yPos)
-    widthSlider:SetWidth(400)
-    widthSlider:SetMinMaxValues(150, 400)
-    widthSlider:SetValueStep(10)
-    widthSlider:SetValue(Config.frameWidth)
-
-    sliderName = widthSlider:GetName()
-    if sliderName then
-        local lowText = GetGlobal(sliderName.."Low")
-        local highText = GetGlobal(sliderName.."High")
-        local valueText = GetGlobal(sliderName.."Text")
-
-        if lowText then lowText:SetText("") end
-        if highText then highText:SetText("") end
-        if valueText then valueText:SetText("") end
-    end
+    local widthSlider, newY = UI:CreateSlider(
+            content, "PeaversWidthSlider", 150, 400, 10, 25, yPos, Config.frameWidth
+    )
+    yPos = newY
 
     widthSlider:SetScript("OnValueChanged", function(self, value)
         local roundedValue = math.floor(value / 10 + 0.5) * 10
@@ -310,97 +212,63 @@ function Config:InitializeOptions()
         end
     end)
 
-    yPos = yPos - 50  -- Extra spacing between sections
+    yPos = yPos - 10 -- Extra spacing between sections
 
     -- Visual Settings section
-    local visualText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    visualText:SetPoint("TOPLEFT", 25, yPos)  -- Aligned with content
-    visualText:SetText("Visual Settings")
-    visualText:SetTextColor(1, 0.82, 0)
-    visualText:SetWidth(400)  -- Gold color
-    yPos = yPos - 25
+    local _, newY = UI:CreateSectionHeader(content, "Visual Settings", 25, yPos)
+    yPos = newY
 
-    -- Add title bar checkbox
-    local titleBarCheckbox = CreateFrame("CheckButton", "PeaversTitleBarCheckbox", content, "InterfaceOptionsCheckButtonTemplate")
-    titleBarCheckbox:SetPoint("TOPLEFT", 25, yPos)
-
-    -- Get and set the text
-    local textObj = titleBarCheckbox.Text
-    if not textObj and titleBarCheckbox:GetName() then
-        textObj = GetGlobal(titleBarCheckbox:GetName().."Text")
-    end
-
-    if textObj then
-        textObj:SetText("Show Title Bar")
-        textObj:SetTextColor(1, 1, 1)  -- White color
-    end
-
-    -- Set the initial state
-    titleBarCheckbox:SetChecked(Config.showTitleBar)
-
-    -- OnClick handler
-    titleBarCheckbox:SetScript("OnClick", function(self)
-        Config.showTitleBar = self:GetChecked()
-        Config:Save()
-        if ST.Core then
-            ST.Core:UpdateTitleBarVisibility()
-        end
-    end)
-
-    yPos = yPos - 30  -- Move down for next element
+    -- Show title bar checkbox
+    local titleBarCheckbox, newY = UI:CreateCheckbox(
+            content,
+            "PeaversTitleBarCheckbox",
+            "Show Title Bar",
+            25,
+            yPos,
+            Config.showTitleBar,
+            {1, 1, 1},
+            function(self)
+                Config.showTitleBar = self:GetChecked()
+                Config:Save()
+                if ST.Core then
+                    ST.Core:UpdateTitleBarVisibility()
+                end
+            end
+    )
+    yPos = newY
 
     -- Lock position checkbox
-    local lockPositionCheckbox = CreateFrame("CheckButton", "PeaversLockPositionCheckbox", content, "InterfaceOptionsCheckButtonTemplate")
-    lockPositionCheckbox:SetPoint("TOPLEFT", 25, yPos)
-
-    -- Get and set the text
-    local textObj = lockPositionCheckbox.Text
-    if not textObj and lockPositionCheckbox:GetName() then
-        textObj = GetGlobal(lockPositionCheckbox:GetName().."Text")
-    end
-
-    if textObj then
-        textObj:SetText("Lock Frame Position")
-        textObj:SetTextColor(1, 1, 1)  -- White color
-    end
-
-    -- Set the initial state
-    lockPositionCheckbox:SetChecked(Config.lockPosition)
-
-    -- OnClick handler
-    lockPositionCheckbox:SetScript("OnClick", function(self)
-        Config.lockPosition = self:GetChecked()
-        Config:Save()
-        if ST.Core then
-            ST.Core:UpdateFrameLock()
-        end
-    end)
-
-    yPos = yPos - 30  -- Move down for next element
+    local lockPositionCheckbox, newY = UI:CreateCheckbox(
+            content,
+            "PeaversLockPositionCheckbox",
+            "Lock Frame Position",
+            25,
+            yPos,
+            Config.lockPosition,
+            {1, 1, 1},
+            function(self)
+                Config.lockPosition = self:GetChecked()
+                Config:Save()
+                if ST.Core then
+                    ST.Core:UpdateFrameLock()
+                end
+            end
+    )
+    yPos = newY
 
     -- Background opacity slider
-    local opacityLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    opacityLabel:SetPoint("TOPLEFT", 25, yPos)
-    opacityLabel:SetText("Background Opacity: " .. math.floor(Config.bgAlpha * 100) .. "%")
-    yPos = yPos - 20
+    local opacityLabel, newY = UI:CreateLabel(
+            content,
+            "Background Opacity: " .. math.floor(Config.bgAlpha * 100) .. "%",
+            25,
+            yPos
+    )
+    yPos = newY
 
-    local opacitySlider = CreateFrame("Slider", "PeaversOpacitySlider", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", 25, yPos)
-    opacitySlider:SetWidth(400)
-    opacitySlider:SetMinMaxValues(0, 1)
-    opacitySlider:SetValueStep(0.05)
-    opacitySlider:SetValue(Config.bgAlpha)
-
-    sliderName = opacitySlider:GetName()
-    if sliderName then
-        local lowText = GetGlobal(sliderName.."Low")
-        local highText = GetGlobal(sliderName.."High")
-        local valueText = GetGlobal(sliderName.."Text")
-
-        if lowText then lowText:SetText("") end
-        if highText then highText:SetText("") end
-        if valueText then valueText:SetText("") end
-    end
+    local opacitySlider, newY = UI:CreateSlider(
+            content, "PeaversOpacitySlider", 0, 1, 0.05, 25, yPos, Config.bgAlpha
+    )
+    yPos = newY
 
     opacitySlider:SetScript("OnValueChanged", function(self, value)
         local roundedValue = math.floor(value * 20 + 0.5) / 20
@@ -409,38 +277,35 @@ function Config:InitializeOptions()
         Config:Save()
         if ST.Core and ST.Core.frame then
             ST.Core.frame:SetBackdropColor(
-                Config.bgColor.r,
-                Config.bgColor.g,
-                Config.bgColor.b,
-                Config.bgAlpha
-            )
-            if ST.Core.titleBar then
-                ST.Core.titleBar:SetBackdropColor(
                     Config.bgColor.r,
                     Config.bgColor.g,
                     Config.bgColor.b,
                     Config.bgAlpha
+            )
+            if ST.Core.titleBar then
+                ST.Core.titleBar:SetBackdropColor(
+                        Config.bgColor.r,
+                        Config.bgColor.g,
+                        Config.bgColor.b,
+                        Config.bgAlpha
                 )
             end
         end
     end)
 
-    yPos = yPos - 40
+    -- Background color section removed
 
     -- Bar texture dropdown
-    local textureText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    textureText:SetPoint("TOPLEFT", 25, yPos)
-    textureText:SetText("Bar Texture:")
-    textureText:SetTextColor(1, 0.82, 0)  -- Gold color
-    yPos = yPos - 25
-
-    local textureDropdown = CreateFrame("Frame", "PeaversTextureDropdown", content, "UIDropDownMenuTemplate")
-    textureDropdown:SetPoint("TOPLEFT", 25, yPos)
-    UIDropDownMenu_SetWidth(textureDropdown, 360)
+    local textureLabel, newY = UI:CreateLabel(content, "Bar Texture:", 25, yPos)
+    yPos = newY
 
     local textures = self:GetBarTextures()
     local currentTexture = textures[self.barTexture] or "Default"
-    UIDropDownMenu_SetText(textureDropdown, currentTexture)
+
+    local textureDropdown, newY = UI:CreateDropdown(
+            content, "PeaversTextureDropdown", 25, yPos, 360, currentTexture
+    )
+    yPos = newY
 
     UIDropDownMenu_Initialize(textureDropdown, function(self, level)
         local info = UIDropDownMenu_CreateInfo()
@@ -461,22 +326,17 @@ function Config:InitializeOptions()
         end
     end)
 
-    yPos = yPos - 40
-
     -- Font dropdown
-    local fontText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    fontText:SetPoint("TOPLEFT", 25, yPos)
-    fontText:SetText("Font:")
-    fontText:SetTextColor(1, 0.82, 0)  -- Gold color
-    yPos = yPos - 25
-
-    local fontDropdown = CreateFrame("Frame", "PeaversFontDropdown", content, "UIDropDownMenuTemplate")
-    fontDropdown:SetPoint("TOPLEFT", 25, yPos)
-    UIDropDownMenu_SetWidth(fontDropdown, 360)
+    local fontLabel, newY = UI:CreateLabel(content, "Font:", 25, yPos)
+    yPos = newY
 
     local fonts = self:GetFonts()
     local currentFont = fonts[self.fontFace] or "Default"
-    UIDropDownMenu_SetText(fontDropdown, currentFont)
+
+    local fontDropdown, newY = UI:CreateDropdown(
+            content, "PeaversFontDropdown", 25, yPos, 360, currentFont
+    )
+    yPos = newY
 
     UIDropDownMenu_Initialize(fontDropdown, function(self, level)
         local info = UIDropDownMenu_CreateInfo()
@@ -508,7 +368,6 @@ function Config:InitializeOptions()
 
     return panel
 end
-
 
 -- Function to get available fonts in alphabetical order
 function Config:GetFonts()
@@ -601,7 +460,7 @@ function Config:OpenOptions()
     -- Try to use modern Settings API first
     if categoryID and Settings and Settings.OpenToCategory then
         Settings.OpenToCategory(categoryID)
-    -- Fall back to pre-Dragonflight method
+        -- Fall back to pre-Dragonflight method
     elseif InterfaceOptions_AddCategory then
         -- Workaround for Blizzard bug where first call may not properly focus category
         InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")

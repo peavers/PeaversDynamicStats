@@ -1,0 +1,31 @@
+## Interface: 110007, 110100
+
+## Title: PeaversDynamicStats
+## Notes: Displays secondary stats (haste, crit, mastery, versatility) in a movable frame
+## IconTexture: Interface\AddOns\PeaversDynamicStats\src\Media\Icon.tga
+
+## Author: Peavers
+## Version: 1.0.1
+## X-Curse-Project-ID: 1184820
+
+## SavedVariables: PeaversDynamicStatsDB
+
+# Main
+src\Main.lua
+
+# UI first (since Config depends on it)
+src\UI\UI.lua
+
+# Utils
+src\Utils\Utils.lua
+src\Utils\Config.lua
+
+# Core
+src\Core\Core.lua
+src\Core\Events.lua
+src\Core\SlashCommands.lua
+
+# UI
+src\UI\StatBar.lua
+src\UI\TitleBar.lua
+src\UI\Bars.lua

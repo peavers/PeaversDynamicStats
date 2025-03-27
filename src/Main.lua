@@ -1,0 +1,3 @@
+local addonName, PDS = ...
+
+PDS = PDS or {}

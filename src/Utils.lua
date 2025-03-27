@@ -8,74 +8,21 @@ local addonName, ST = ...
 ST.Utils = {}
 local Utils = ST.Utils
 
--- Get primary stat for a class
-function Utils:GetPrimaryStatForClass(class)
-    local strengthClasses = { "WARRIOR", "PALADIN", "DEATHKNIGHT" }
-    local agilityClasses = { "HUNTER", "ROGUE", "MONK", "DEMONHUNTER", "EVOKER" }
-    local intellectClasses = { "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
-
-    for _, c in ipairs(strengthClasses) do
-        if class == c then return "STRENGTH" end
-    end
-
-    for _, c in ipairs(agilityClasses) do
-        if class == c then return "AGILITY" end
-    end
-
-    for _, c in ipairs(intellectClasses) do
-        if class == c then return "INTELLECT" end
-    end
-
-    return "STAMINA" -- Default if somehow no match
-end
-
 -- Get stat value
-function Utils:GetStatValue(statType, primaryStat)
+function Utils:GetStatValue(statType)
     local value = 0
-    local maxValue = 100
 
-    if statType == "STRENGTH" then
-        value = UnitStat("player", 1)
-        maxValue = self:EstimateMaxStat(value, primaryStat == "STRENGTH")
-
-    elseif statType == "AGILITY" then
-        value = UnitStat("player", 2)
-        maxValue = self:EstimateMaxStat(value, primaryStat == "AGILITY")
-
-    elseif statType == "STAMINA" then
-        value = UnitStat("player", 3)
-        maxValue = self:EstimateMaxStat(value, false) -- Stamina is never a primary stat
-
-    elseif statType == "INTELLECT" then
-        value = UnitStat("player", 4)
-        maxValue = self:EstimateMaxStat(value, primaryStat == "INTELLECT")
-
-    elseif statType == "HASTE" then
+    if statType == "HASTE" then
         value = GetHaste()
-        maxValue = 30 -- Reasonable cap for percentage stats
-
     elseif statType == "CRIT" then
         value = GetCritChance()
-        maxValue = 30
-
     elseif statType == "MASTERY" then
         value = GetMasteryEffect()
-        maxValue = 30
-
     elseif statType == "VERSATILITY" then
         value = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE)
-        maxValue = 20 -- Versatility tends to be lower than other stats
     end
 
-    return value, maxValue
-end
-
--- Estimate a reasonable max stat value based on current value
-function Utils:EstimateMaxStat(currentValue, isPrimary)
-    -- For primary stats, estimate what a well-geared player might have
-    -- For secondary stats, use a lower value
-    local buffer = isPrimary and 1.5 or 1.2
-    return math.max(100, math.floor(currentValue * buffer))
+    return value
 end
 
 -- Format large numbers

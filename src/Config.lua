@@ -30,10 +30,6 @@ ST.Config = {
     combatUpdateInterval = 0.2,
     showOnLogin = true,
     showStats = {
-        STRENGTH = true,
-        AGILITY = true,
-        INTELLECT = true,
-        STAMINA = true,
         HASTE = true,
         CRIT = true,
         MASTERY = true,
@@ -98,10 +94,6 @@ function Config:InitializeOptions()
     -- Create checkboxes for stats
     local yPos = -70
     local stats = {
-        {key = "STRENGTH", name = "Strength"},
-        {key = "AGILITY", name = "Agility"},
-        {key = "INTELLECT", name = "Intellect"},
-        {key = "STAMINA", name = "Stamina"},
         {key = "HASTE", name = "Haste"},
         {key = "CRIT", name = "Critical Strike"},
         {key = "MASTERY", name = "Mastery"},

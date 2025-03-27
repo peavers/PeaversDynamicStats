@@ -114,19 +114,9 @@ function StatBar:Update(value, maxValue)
         local displayValue
         local percentValue
 
-        if self:IsPercentageStat() then
-            -- For percentages (like haste)
-            displayValue = string.format("%.2f%%", self.value)
-            percentValue = math.min(self.value, 100)
-        else
-            -- For primary stats
-            displayValue = string.format("%d", self.value)
-
-            -- Calculate percentage using class-based maximums
-            local playerClass = select(2, UnitClass("player"))
-            local maxForClass = self:GetMaxValueForClass(playerClass, self.statType)
-            percentValue = math.min((self.value / maxForClass) * 100, 100)
-        end
+        -- We're dealing only with percentage stats now
+        displayValue = string.format("%.2f%%", self.value)
+        percentValue = math.min(self.value, 100)
 
         -- Only update text if it's changed
         local currentText = self.frame.valueText:GetText()
@@ -163,55 +153,10 @@ function StatBar:AnimateToValue(newValue)
     end
 end
 
--- Helper function to detect percentage stats
-function StatBar:IsPercentageStat()
-    return self.statType == "HASTE" or
-           self.statType == "CRIT" or
-           self.statType == "MASTERY" or
-           self.statType == "VERSATILITY"
-end
-
--- Get appropriate max value based on character class and stat type
-function StatBar:GetMaxValueForClass(class, statType)
-    -- These are rough estimations, adjust based on your game version
-    local maxValues = {
-        WARRIOR = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 2000, STAMINA = 6000 },
-        PALADIN = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 3000, STAMINA = 6000 },
-        DEATHKNIGHT = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 2000, STAMINA = 6000 },
-        HUNTER = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5000 },
-        ROGUE = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5000 },
-        MONK = { STRENGTH = 2500, AGILITY = 5000, INTELLECT = 3000, STAMINA = 5500 },
-        DEMONHUNTER = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5500 },
-        PRIEST = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 5000 },
-        MAGE = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 4500 },
-        WARLOCK = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 5000 },
-        DRUID = { STRENGTH = 3000, AGILITY = 4000, INTELLECT = 4000, STAMINA = 5500 },
-        SHAMAN = { STRENGTH = 3000, AGILITY = 4000, INTELLECT = 4000, STAMINA = 5500 },
-    }
-
-    if maxValues[class] and maxValues[class][statType] then
-        return maxValues[class][statType]
-    end
-
-    -- Default fallback values
-    local defaults = {
-        STRENGTH = 4000,
-        AGILITY = 4000,
-        INTELLECT = 4000,
-        STAMINA = 5000
-    }
-
-    return defaults[statType] or 5000
-end
-
 -- Get color for stat type
 function StatBar:GetColorForStat(statType)
     -- Details!-inspired colors with higher saturation
     local colors = {
-        STRENGTH = { 0.9, 0.2, 0.2 },     -- Bright Red
-        AGILITY = { 0.2, 0.9, 0.2 },      -- Bright Green
-        INTELLECT = { 0.2, 0.2, 0.9 },    -- Bright Blue
-        STAMINA = { 0.9, 0.7, 0.0 },      -- Gold
         HASTE = { 0.0, 0.9, 0.9 },        -- Cyan
         CRIT = { 0.9, 0.9, 0.0 },         -- Yellow
         MASTERY = { 0.9, 0.4, 0.0 },      -- Orange

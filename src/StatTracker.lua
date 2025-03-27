@@ -38,7 +38,7 @@ function Core:CreateTitleBar()
     local title = titleBar:CreateFontString(nil, "OVERLAY")
     title:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
     title:SetPoint("LEFT", titleBar, "LEFT", 5, 0)
-    title:SetText("PeaversDynamicStats")
+    title:SetText("Secondary Stats")
 
     -- Set the title text to white instead of class color
     title:SetTextColor(1, 1, 1)
@@ -117,22 +117,13 @@ function Core:CreateBars()
     end
     self.bars = {}
 
-    -- Get player's primary stat
-    local _, class = UnitClass("player")
-    local primaryStat = ST.Utils:GetPrimaryStatForClass(class)
-
     -- Stats to display in order
     local statOrder = {
-        "STRENGTH", "AGILITY", "INTELLECT", "STAMINA",
         "HASTE", "CRIT", "MASTERY", "VERSATILITY"
     }
 
     -- Stat display names
     local statNames = {
-        STRENGTH = "Strength",
-        AGILITY = "Agility",
-        INTELLECT = "Intellect",
-        STAMINA = "Stamina",
         HASTE = "Haste",
         CRIT = "Critical Strike",
         MASTERY = "Mastery",
@@ -153,8 +144,8 @@ function Core:CreateBars()
             bar.frame._yOffset = yOffset
 
             -- Update stat values
-            local value, maxValue = ST.Utils:GetStatValue(statType, primaryStat)
-            bar:Update(value, maxValue)
+            local value = ST.Utils:GetStatValue(statType)
+            bar:Update(value)
 
             -- Add to bar collection
             table.insert(self.bars, bar)
@@ -176,13 +167,9 @@ function Core:UpdateAllBars()
         self.previousValues = {}
     end
 
-    -- Get player's primary stat
-    local _, class = UnitClass("player")
-    local primaryStat = ST.Utils:GetPrimaryStatForClass(class)
-
     -- Update each bar only if value has changed
     for _, bar in ipairs(self.bars) do
-        local value, maxValue = ST.Utils:GetStatValue(bar.statType, primaryStat)
+        local value = ST.Utils:GetStatValue(bar.statType)
 
         -- Create key for this stat if it doesn't exist
         local statKey = bar.statType
@@ -192,7 +179,7 @@ function Core:UpdateAllBars()
 
         -- Only update the bar if the value has changed
         if value ~= self.previousValues[statKey] then
-            bar:Update(value, maxValue)
+            bar:Update(value)
             self.previousValues[statKey] = value
         end
     end

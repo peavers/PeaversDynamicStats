@@ -1,4 +1,4 @@
-## Interface: 110007, 110100
+## Interface: 110100, 110105
 
 ## Title: PeaversDynamicStats
 ## Notes: Displays secondary stats (haste, crit, mastery, versatility) in a movable frame
@@ -6,7 +6,7 @@
 
 ## Author: Peavers
 ## Version: 1.0.4
-## X-Curse-Project-ID: 1184820
+## X-Curse-Project-ID: 1230220
 
 ## SavedVariables: PeaversDynamicStatsDB
 

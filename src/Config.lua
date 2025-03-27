@@ -82,7 +82,7 @@ end
 -- Initialize settings with a simplified approach
 function Config:InitializeOptions()
     -- Create simple panel
-    local panel = CreateFrame("Frame", nil, UIParent)
+    local panel = CreateFrame("Frame", "PeaversDynamicStatsPanel", UIParent)
     panel.name = "PeaversDynamicStats"
 
     -- Create title
@@ -310,12 +310,13 @@ function Config:InitializeOptions()
         end
     end)
 
-    -- Register with Settings
-    categoryID = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
-    Settings.RegisterAddOnCategory(categoryID)
+    -- Check for Dragonflight+ Settings API
+    if Settings and Settings.RegisterCanvasLayoutCategory then
+        categoryID = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+        Settings.RegisterAddOnCategory(categoryID)
+    end
 
     -- For compatibility with pre-Dragonflight UI
-    -- Check if InterfaceOptions exists (pre-Dragonflight)
     if InterfaceOptions_AddCategory then
         InterfaceOptions_AddCategory(panel)
     end
@@ -378,12 +379,16 @@ end
 
 -- Function to open settings
 function Config:OpenOptions()
-    if not categoryID then
-        self:InitializeOptions()
+    if not self.optionsPanel then
+        self.optionsPanel = self:InitializeOptions()
     end
 
-    if categoryID then
+    -- Try to use modern Settings API first
+    if categoryID and Settings and Settings.OpenToCategory then
         Settings.OpenToCategory(categoryID)
+    -- Fall back to pre-Dragonflight method
+    elseif InterfaceAddOns and InterfaceAddOns.PeaversDynamicStats then
+        InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
     end
 end
 

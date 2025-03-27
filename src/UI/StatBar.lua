@@ -1,7 +1,7 @@
-local addonName, ST = ...
+local addonName, PDS = ...
 
-ST.StatBar = {}
-local StatBar = ST.StatBar
+PDS.StatBar = {}
+local StatBar = PDS.StatBar
 
 -- Constructor
 function StatBar:New(parent, name, statType)
@@ -44,7 +44,7 @@ end
 -- Create the bar frame
 function StatBar:CreateFrame(parent)
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    frame:SetSize(ST.Config.barWidth, ST.Config.barHeight)
+    frame:SetSize(PDS.Config.barWidth, PDS.Config.barHeight)
 
     -- Background for the bar
     local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
@@ -65,7 +65,7 @@ function StatBar:CreateFrame(parent)
     bar:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT", -1, 1)
     bar:SetMinMaxValues(0, 100)
     bar:SetValue(0)
-    bar:SetStatusBarTexture(ST.Config.barTexture)
+    bar:SetStatusBarTexture(PDS.Config.barTexture)
 
     -- Set color based on stat type
     local r, g, b = self:GetColorForStat(self.statType)
@@ -75,7 +75,7 @@ function StatBar:CreateFrame(parent)
     -- Value text (right side)
     local valueText = bar:CreateFontString(nil, "OVERLAY")
     valueText:SetPoint("RIGHT", bar, "RIGHT", -4, 0)
-    valueText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    valueText:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
     valueText:SetJustifyH("RIGHT")
     valueText:SetText("0")
     valueText:SetTextColor(1, 1, 1)
@@ -84,7 +84,7 @@ function StatBar:CreateFrame(parent)
     -- Name text (left side)
     local nameText = bar:CreateFontString(nil, "OVERLAY")
     nameText:SetPoint("LEFT", bar, "LEFT", 4, 0)
-    nameText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    nameText:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
     nameText:SetJustifyH("LEFT")
     nameText:SetText(self.name)
     nameText:SetTextColor(1, 1, 1)
@@ -183,20 +183,20 @@ end
 -- Method to update the font
 function StatBar:UpdateFont()
     -- Update the font for both text elements
-    self.frame.valueText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
-    self.frame.nameText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    self.frame.valueText:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
+    self.frame.nameText:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
 end
 
 -- Method to update bar texture
 function StatBar:UpdateTexture()
     -- Update the texture for the status bar
-    self.frame.bar:SetStatusBarTexture(ST.Config.barTexture)
+    self.frame.bar:SetStatusBarTexture(PDS.Config.barTexture)
 end
 
 -- Method to update bar height
 function StatBar:UpdateHeight()
     -- Update the height of the bar frame
-    self.frame:SetHeight(ST.Config.barHeight)
+    self.frame:SetHeight(PDS.Config.barHeight)
 end
 
 -- Method to update bar width

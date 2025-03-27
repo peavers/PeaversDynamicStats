@@ -1,8 +1,8 @@
-local addonName, ST = ...
+local addonName, PDS = ...
 
 -- Create Utils namespace
-ST.Utils = {}
-local Utils = ST.Utils
+PDS.Utils = {}
+local Utils = PDS.Utils
 
 -- Get stat value
 function Utils:GetStatValue(statType)

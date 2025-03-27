@@ -1,5 +1,5 @@
-local addonName, ST = ...
-local Core = ST.Core
+local addonName, PDS = ...
+local Core = PDS.Core
 
 -- Frame to handle events
 local frame = CreateFrame("Frame")
@@ -11,11 +11,11 @@ local inCombat = false
 -- Event handling
 function Core:OnEvent(event, ...)
     if event == "ADDON_LOADED" and ... == addonName then
-        ST.Config:Load()
+        PDS.Config:Load()
         self:Initialize()
         frame:UnregisterEvent("ADDON_LOADED")
     elseif event == "PLAYER_LOGOUT" then
-        ST.Config:Save()
+        PDS.Config:Save()
     elseif event == "UNIT_STATS" or event == "UNIT_AURA" or event == "PLAYER_EQUIPMENT_CHANGED" then
         self:UpdateAllBars()
     elseif event == "PLAYER_REGEN_DISABLED" then
@@ -30,7 +30,7 @@ function Core:OnUpdate(elapsed)
     updateTimer = updateTimer + elapsed
 
     -- Use a much longer interval when not in combat
-    local interval = inCombat and ST.Config.combatUpdateInterval or 2.0 -- 2 seconds when out of combat
+    local interval = inCombat and PDS.Config.combatUpdateInterval or 2.0 -- 2 seconds when out of combat
 
     if updateTimer >= interval then
         -- Only update when necessary

@@ -1,5 +1,5 @@
-local _, ST = ...
-local Core = ST.Core
+local _, PDS = ...
+local Core = PDS.Core
 
 -- Create or recreate stat bars
 function Core:CreateBars()
@@ -25,19 +25,19 @@ function Core:CreateBars()
     -- Create bars for enabled stats
     local yOffset = 0
     for _, statType in ipairs(statOrder) do
-        if ST.Config.showStats[statType] then
-            local bar = ST.StatBar:New(self.contentFrame, statNames[statType], statType)
+        if PDS.Config.showStats[statType] then
+            local bar = PDS.StatBar:New(self.contentFrame, statNames[statType], statType)
             bar:SetPosition(0, yOffset)
 
             -- Update stat values
-            local value = ST.Utils:GetStatValue(statType)
+            local value = PDS.Utils:GetStatValue(statType)
             bar:Update(value)
 
             -- Add to bar collection
             table.insert(self.bars, bar)
 
             -- Adjust offset for next bar using the configured height and spacing
-            yOffset = yOffset - (ST.Config.barHeight + ST.Config.barSpacing)
+            yOffset = yOffset - (PDS.Config.barHeight + PDS.Config.barSpacing)
         end
     end
 
@@ -54,7 +54,7 @@ function Core:CreateBars()
     self:AdjustFrameHeight()
 
     -- Set frame width based on configuration
-    self.frame:SetWidth(ST.Config.frameWidth)
+    self.frame:SetWidth(PDS.Config.frameWidth)
 end
 
 -- Update all bars with latest stat values
@@ -66,7 +66,7 @@ function Core:UpdateAllBars()
 
     -- Update each bar only if value has changed
     for _, bar in ipairs(self.bars) do
-        local value = ST.Utils:GetStatValue(bar.statType)
+        local value = PDS.Utils:GetStatValue(bar.statType)
 
         -- Create key for this stat if it doesn't exist
         local statKey = bar.statType

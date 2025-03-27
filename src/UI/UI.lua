@@ -1,10 +1,10 @@
-local addonName, ST = ...
+local addonName, PDS = ...
 
 -- Create UI namespace
-ST.UI = {}
+PDS.UI = {}
 
 -- Initialize UI class
-local UI = ST.UI
+local UI = PDS.UI
 local UIMetatable = {}
 
 -- Safe global access function

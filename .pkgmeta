@@ -1,0 +1,11 @@
+package-as: PeaversDynamicStats
+
+ignore:
+  - .git
+  - .github
+  - .gitignore
+  - .editorconfig
+  - .pkgmeta
+  - README.md
+  - CHANGELOG.md
+  - LICENSE

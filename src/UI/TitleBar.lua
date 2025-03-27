@@ -1,6 +1,6 @@
-local _, ST = ...
+local _, PDS = ...
 local TitleBar = {}
-ST.TitleBar = TitleBar
+PDS.TitleBar = TitleBar
 
 -- Creates the titlebar
 function TitleBar:Create(parentFrame)
@@ -16,12 +16,12 @@ function TitleBar:Create(parentFrame)
     })
 
     -- Use the same background color as the main frame
-    titleBar:SetBackdropColor(ST.Config.bgColor.r, ST.Config.bgColor.g, ST.Config.bgColor.b, ST.Config.bgAlpha)
+    titleBar:SetBackdropColor(PDS.Config.bgColor.r, PDS.Config.bgColor.g, PDS.Config.bgColor.b, PDS.Config.bgAlpha)
     titleBar:SetBackdropBorderColor(0, 0, 0, 1)
 
     -- Add title text
     local title = titleBar:CreateFontString(nil, "OVERLAY")
-    title:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    title:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
     title:SetPoint("LEFT", titleBar, "LEFT", 5, 0)
     title:SetText("Secondary Stats")
 
@@ -36,7 +36,7 @@ function TitleBar:Create(parentFrame)
 
     -- Add a subtitle or version
     local subtitle = titleBar:CreateFontString(nil, "OVERLAY")
-    subtitle:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    subtitle:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
     subtitle:SetPoint("LEFT", verticalLine, "RIGHT", 5, 0)
     subtitle:SetText("v1.0")
     subtitle:SetTextColor(0.8, 0.8, 0.8)

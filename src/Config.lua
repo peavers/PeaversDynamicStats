@@ -296,7 +296,7 @@ function Config:InitializeOptions()
     -- Background color section removed
 
     -- Bar texture dropdown
-    local textureLabel, newY = UI:CreateLabel(content, "Bar Texture:", 25, yPos)
+    local textureLabel, newY = UI:CreateLabel(content, "Bar Texture", 25, yPos)
     yPos = newY
 
     local textures = self:GetBarTextures()
@@ -327,7 +327,7 @@ function Config:InitializeOptions()
     end)
 
     -- Font dropdown
-    local fontLabel, newY = UI:CreateLabel(content, "Font:", 25, yPos)
+    local fontLabel, newY = UI:CreateLabel(content, "Font", 25, yPos)
     yPos = newY
 
     local fonts = self:GetFonts()

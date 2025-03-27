@@ -21,18 +21,20 @@ end
 
 -- Create a section header
 function UI:CreateSectionHeader(parent, text, x, y)
-    local header = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local header = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     header:SetPoint("TOPLEFT", x, y)
     header:SetText(text)
+    header:SetTextColor(1, 0.82, 0) -- Gold color only for headers
     header:SetWidth(400)
     return header, y - 25 -- Return new y position
 end
 
 -- Create a label
 function UI:CreateLabel(parent, text, x, y, fontObject)
-    local label = parent:CreateFontString(nil, "ARTWORK", fontObject or "GameFontHighlight")
+    local label = parent:CreateFontString(nil, "ARTWORK", fontObject or "GameFontNormal")
     label:SetPoint("TOPLEFT", x, y)
     label:SetText(text)
+    label:SetTextColor(1, 1, 1) -- Explicitly set white color for all labels
     return label, y - 20 -- Return new y position
 end
 
@@ -49,6 +51,7 @@ function UI:CreateCheckbox(parent, name, text, x, y, initialValue, textColor, on
 
     if textObj then
         textObj:SetText(text)
+        textObj:SetFontObject("GameFontNormal")
         if textColor then
             textObj:SetTextColor(textColor[1], textColor[2], textColor[3])
         end

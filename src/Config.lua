@@ -213,9 +213,12 @@ function Config:InitializeOptions()
     end)
 
     yPos = yPos - 10 -- Extra spacing between sections
-
     -- Visual Settings section
     local _, newY = UI:CreateSectionHeader(content, "Visual Settings", 25, yPos)
+    yPos = newY
+
+    -- Group 1: Layout controls
+    local _, newY = UI:CreateLabel(content, "Layout Options:", 30, yPos, "GameFontNormalSmall")
     yPos = newY
 
     -- Show title bar checkbox
@@ -223,7 +226,7 @@ function Config:InitializeOptions()
             content,
             "PeaversTitleBarCheckbox",
             "Show Title Bar",
-            25,
+            40,
             yPos,
             Config.showTitleBar,
             {1, 1, 1},
@@ -242,7 +245,7 @@ function Config:InitializeOptions()
             content,
             "PeaversLockPositionCheckbox",
             "Lock Frame Position",
-            25,
+            40,
             yPos,
             Config.lockPosition,
             {1, 1, 1},
@@ -254,25 +257,29 @@ function Config:InitializeOptions()
                 end
             end
     )
+    yPos = newY - 10 -- Extra spacing between control groups
+
+    -- Group 2: Background settings
+    local _, newY = UI:CreateLabel(content, "Background:", 30, yPos, "GameFontNormalSmall")
     yPos = newY
 
     -- Background opacity slider
     local opacityLabel, newY = UI:CreateLabel(
             content,
-            "Background Opacity: " .. math.floor(Config.bgAlpha * 100) .. "%",
-            25,
+            "Opacity: " .. math.floor(Config.bgAlpha * 100) .. "%",
+            40,
             yPos
     )
     yPos = newY
 
     local opacitySlider, newY = UI:CreateSlider(
-            content, "PeaversOpacitySlider", 0, 1, 0.05, 25, yPos, Config.bgAlpha
+            content, "PeaversOpacitySlider", 0, 1, 0.05, 40, yPos, Config.bgAlpha
     )
     yPos = newY
 
     opacitySlider:SetScript("OnValueChanged", function(self, value)
         local roundedValue = math.floor(value * 20 + 0.5) / 20
-        opacityLabel:SetText("Background Opacity: " .. math.floor(roundedValue * 100) .. "%")
+        opacityLabel:SetText("Opacity: " .. math.floor(roundedValue * 100) .. "%")
         Config.bgAlpha = roundedValue
         Config:Save()
         if ST.Core and ST.Core.frame then
@@ -292,18 +299,53 @@ function Config:InitializeOptions()
             end
         end
     end)
+    yPos = newY - 10 -- Extra spacing between control groups
 
-    -- Background color section removed
+    -- Group 3: Font selection
+    local _, newY = UI:CreateLabel(content, "Text Style:", 30, yPos, "GameFontNormalSmall")
+    yPos = newY
 
-    -- Bar texture dropdown
-    local textureLabel, newY = UI:CreateLabel(content, "Bar Texture", 25, yPos)
+    local fontLabel, newY = UI:CreateLabel(content, "Font", 40, yPos)
+    yPos = newY
+
+    local fonts = self:GetFonts()
+    local currentFont = fonts[self.fontFace] or "Default"
+
+    local fontDropdown, newY = UI:CreateDropdown(
+            content, "PeaversFontDropdown", 40, yPos, 345, currentFont
+    )
+    yPos = newY
+
+    UIDropDownMenu_Initialize(fontDropdown, function(self, level)
+        local info = UIDropDownMenu_CreateInfo()
+        for path, name in pairs(fonts) do
+            info.text = name
+            info.checked = (path == Config.fontFace)
+            info.func = function()
+                Config.fontFace = path
+                UIDropDownMenu_SetText(fontDropdown, name)
+                Config:Save()
+                if ST.Core and ST.Core.CreateBars then
+                    ST.Core:CreateBars()
+                end
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    yPos = newY - 10 -- Extra spacing between control groups
+
+    -- Group 4: Bar texture
+    local _, newY = UI:CreateLabel(content, "Bar Appearance:", 30, yPos, "GameFontNormalSmall")
+    yPos = newY
+
+    local textureLabel, newY = UI:CreateLabel(content, "Bar Texture", 40, yPos)
     yPos = newY
 
     local textures = self:GetBarTextures()
     local currentTexture = textures[self.barTexture] or "Default"
 
     local textureDropdown, newY = UI:CreateDropdown(
-            content, "PeaversTextureDropdown", 25, yPos, 360, currentTexture
+            content, "PeaversTextureDropdown", 40, yPos, 345, currentTexture
     )
     yPos = newY
 
@@ -320,35 +362,6 @@ function Config:InitializeOptions()
                     for _, bar in ipairs(ST.Core.bars) do
                         bar:UpdateTexture()
                     end
-                end
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    -- Font dropdown
-    local fontLabel, newY = UI:CreateLabel(content, "Font", 25, yPos)
-    yPos = newY
-
-    local fonts = self:GetFonts()
-    local currentFont = fonts[self.fontFace] or "Default"
-
-    local fontDropdown, newY = UI:CreateDropdown(
-            content, "PeaversFontDropdown", 25, yPos, 360, currentFont
-    )
-    yPos = newY
-
-    UIDropDownMenu_Initialize(fontDropdown, function(self, level)
-        local info = UIDropDownMenu_CreateInfo()
-        for path, name in pairs(fonts) do
-            info.text = name
-            info.checked = (path == Config.fontFace)
-            info.func = function()
-                Config.fontFace = path
-                UIDropDownMenu_SetText(fontDropdown, name)
-                Config:Save()
-                if ST.Core and ST.Core.CreateBars then
-                    ST.Core:CreateBars()
                 end
             end
             UIDropDownMenu_AddButton(info)

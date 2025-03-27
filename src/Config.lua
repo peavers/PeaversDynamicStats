@@ -510,10 +510,11 @@ function Config:InitializeOptions()
 end
 
 
+-- Function to get available fonts in alphabetical order
 function Config:GetFonts()
     local fonts = {
-        ["Fonts\\FRIZQT__.TTF"] = "Default",
         ["Fonts\\ARIALN.TTF"] = "Arial Narrow",
+        ["Fonts\\FRIZQT__.TTF"] = "Default",
         ["Fonts\\MORPHEUS.TTF"] = "Morpheus",
         ["Fonts\\SKURRI.TTF"] = "Skurri"
     }
@@ -523,21 +524,35 @@ function Config:GetFonts()
         local LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
         if LSM then
             for name, path in pairs(LSM:HashTable("font")) do
-                fonts[path] = "LSM: " .. name
+                fonts[path] = name
             end
         end
     end
 
-    return fonts
+    -- Sort the fonts table by display name
+    local sortedFonts = {}
+    for path, name in pairs(fonts) do
+        table.insert(sortedFonts, {path = path, name = name})
+    end
+
+    table.sort(sortedFonts, function(a, b) return a.name < b.name end)
+
+    -- Rebuild the fonts table
+    local result = {}
+    for _, font in ipairs(sortedFonts) do
+        result[font.path] = font.name
+    end
+
+    return result
 end
 
--- Enhanced function to get available bar textures
+-- Enhanced function to get available bar textures in alphabetical order
 function Config:GetBarTextures()
     local textures = {
         ["Interface\\TargetingFrame\\UI-StatusBar"] = "Default",
-        ["Interface\\RaidFrame\\Raid-Bar-Hp-Fill"] = "Raid",
         ["Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar"] = "Skill Bar",
-        ["Interface\\PVPFrame\\UI-PVP-Progress-Bar"] = "PVP Bar"
+        ["Interface\\PVPFrame\\UI-PVP-Progress-Bar"] = "PVP Bar",
+        ["Interface\\RaidFrame\\Raid-Bar-Hp-Fill"] = "Raid"
     }
 
     -- Check for SharedMedia which is the standard library for shared textures
@@ -546,7 +561,7 @@ function Config:GetBarTextures()
         if LSM then
             -- Properly iterate through all statusbar textures
             for name, path in pairs(LSM:HashTable("statusbar")) do
-                textures[path] = "LSM: " .. name
+                textures[path] = name
             end
         end
     end
@@ -560,7 +575,21 @@ function Config:GetBarTextures()
         end
     end
 
-    return textures
+    -- Sort the textures table by display name
+    local sortedTextures = {}
+    for path, name in pairs(textures) do
+        table.insert(sortedTextures, {path = path, name = name})
+    end
+
+    table.sort(sortedTextures, function(a, b) return a.name < b.name end)
+
+    -- Rebuild the textures table
+    local result = {}
+    for _, texture in ipairs(sortedTextures) do
+        result[texture.path] = texture.name
+    end
+
+    return result
 end
 
 -- Function to open settings

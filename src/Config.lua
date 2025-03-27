@@ -29,6 +29,7 @@ ST.Config = {
     updateInterval = 0.5,
     combatUpdateInterval = 0.2,
     showOnLogin = true,
+    showTitleBar = true, -- New option
     showStats = {
         HASTE = true,
         CRIT = true,
@@ -58,7 +59,7 @@ local function GetGlobal(name)
     return nil
 end
 
--- Function to save configuration
+-- Add to the Config:Save() function:
 function Config:Save()
     if not PeaversDynamicStatsDB then
         PeaversDynamicStatsDB = {}
@@ -76,9 +77,10 @@ function Config:Save()
     PeaversDynamicStatsDB.bgColor = self.bgColor
     PeaversDynamicStatsDB.showStats = self.showStats
     PeaversDynamicStatsDB.barSpacing = self.barSpacing
+    PeaversDynamicStatsDB.showTitleBar = self.showTitleBar -- New line
 end
 
--- Function to load configuration
+-- Add to the Config:Load() function:
 function Config:Load()
     if not PeaversDynamicStatsDB then return end
 
@@ -94,6 +96,7 @@ function Config:Load()
     if PeaversDynamicStatsDB.bgColor then self.bgColor = PeaversDynamicStatsDB.bgColor end
     if PeaversDynamicStatsDB.showStats then self.showStats = PeaversDynamicStatsDB.showStats end
     if PeaversDynamicStatsDB.barSpacing then self.barSpacing = PeaversDynamicStatsDB.barSpacing end
+    if PeaversDynamicStatsDB.showTitleBar ~= nil then self.showTitleBar = PeaversDynamicStatsDB.showTitleBar end -- New line
 end
 
 
@@ -313,6 +316,36 @@ function Config:InitializeOptions()
     visualText:SetTextColor(1, 0.82, 0)
     visualText:SetWidth(400)  -- Gold color
     yPos = yPos - 25
+
+    -- Add title bar checkbox
+    local titleBarCheckbox = CreateFrame("CheckButton", "PeaversTitleBarCheckbox", content, "InterfaceOptionsCheckButtonTemplate")
+    titleBarCheckbox:SetPoint("TOPLEFT", 25, yPos)
+
+    -- Get and set the text
+    local textObj = titleBarCheckbox.Text
+    if not textObj and titleBarCheckbox:GetName() then
+        textObj = GetGlobal(titleBarCheckbox:GetName().."Text")
+    end
+
+    if textObj then
+        textObj:SetText("Show Title Bar")
+        textObj:SetTextColor(1, 1, 1)  -- White color
+    end
+
+    -- Set the initial state
+    titleBarCheckbox:SetChecked(Config.showTitleBar)
+
+    -- OnClick handler
+    titleBarCheckbox:SetScript("OnClick", function(self)
+        Config.showTitleBar = self:GetChecked()
+        Config:Save()
+        if ST.Core then
+            ST.Core:UpdateTitleBarVisibility()
+        end
+    end)
+
+    yPos = yPos - 30  -- Move down for next element
+
 
     -- Background opacity slider
     local opacityLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")

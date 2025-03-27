@@ -104,6 +104,9 @@ function Core:Initialize()
     self.contentFrame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -20)
     self.contentFrame:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", 0, 0)
 
+    -- Apply title bar visibility AFTER content frame is created
+    self:UpdateTitleBarVisibility()
+
     -- Create the stat bars
     self:CreateBars()
 
@@ -164,6 +167,10 @@ function Core:CreateBars()
         self.frame:SetHeight(contentHeight + 20) -- Add title bar height
     end
 
+
+    -- After all bars are created, adjust frame height
+    self:AdjustFrameHeight()
+
     -- Set frame width based on configuration
     self.frame:SetWidth(ST.Config.frameWidth)
 end
@@ -221,6 +228,45 @@ function Core:OnUpdate(elapsed)
         -- Only update when necessary
         self:UpdateAllBars()
         updateTimer = 0
+    end
+end
+
+function Core:UpdateTitleBarVisibility()
+    if self.titleBar then
+        if ST.Config.showTitleBar then
+            self.titleBar:Show()
+            -- Adjust the content frame to start below title bar
+            self.contentFrame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -20)
+        else
+            self.titleBar:Hide()
+            -- Adjust the content frame to use full frame space
+            self.contentFrame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, 0)
+        end
+
+        -- Recalculate frame height
+        self:AdjustFrameHeight()
+    end
+end
+
+-- Add this function to recalculate frame height
+function Core:AdjustFrameHeight()
+    -- Calculate height based on number of bars
+    local barCount = #self.bars
+    local contentHeight = barCount * (ST.Config.barHeight + ST.Config.barSpacing) - ST.Config.barSpacing
+
+    if contentHeight == 0 then
+        -- No bars shown
+        if ST.Config.showTitleBar then
+            self.frame:SetHeight(20) -- Just title bar
+        else
+            self.frame:SetHeight(10) -- Minimal height
+        end
+    else
+        if ST.Config.showTitleBar then
+            self.frame:SetHeight(contentHeight + 20) -- Add title bar height
+        else
+            self.frame:SetHeight(contentHeight) -- Just content
+        end
     end
 end
 

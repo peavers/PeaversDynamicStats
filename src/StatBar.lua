@@ -1,0 +1,259 @@
+--[[
+    StatBar.lua - Class for the stat bars (Details!-inspired)
+]]
+
+local addonName, ST = ...
+
+-- Create the StatBar class
+ST.StatBar = {}
+local StatBar = ST.StatBar
+
+-- Constructor
+function StatBar:New(parent, name, statType)
+    local obj = {}
+    setmetatable(obj, { __index = StatBar })
+
+    obj.name = name
+    obj.statType = statType
+    obj.value = 0
+    obj.maxValue = 100
+    obj.targetValue = 0
+    obj.smoothing = true
+    obj.frame = obj:CreateFrame(parent)
+
+    -- Initialize the animation system
+    obj:InitAnimationSystem()
+
+    return obj
+end
+
+-- Initialize animation system for smooth updates
+function StatBar:InitAnimationSystem()
+    self.smoothing = true
+    self.animationGroup = self.frame.bar:CreateAnimationGroup()
+    self.valueAnimation = self.animationGroup:CreateAnimation("Progress")
+    self.valueAnimation:SetDuration(0.3)
+    self.valueAnimation:SetSmoothing("OUT")
+
+    self.valueAnimation:SetScript("OnUpdate", function(anim)
+        local progress = anim:GetProgress()
+        local startValue = anim.startValue or 0
+        local changeValue = anim.changeValue or 0
+        local currentValue = startValue + (changeValue * progress)
+
+        self.frame.bar:SetValue(currentValue)
+    end)
+end
+
+-- Create the bar frame
+function StatBar:CreateFrame(parent)
+    local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    frame:SetSize(ST.Config.barWidth, ST.Config.barHeight)
+
+    -- Background for the bar (Details!-style)
+    local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    bg:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    bg:SetBackdrop({
+        bgFile = "Interface\\BUTTONS\\WHITE8X8",
+        edgeFile = "Interface\\BUTTONS\\WHITE8X8",
+        tile = true, edgeSize = 1,
+    })
+    bg:SetBackdropColor(0, 0, 0, 0.7)
+    bg:SetBackdropBorderColor(0, 0, 0, 1)
+    frame.bg = bg
+
+    -- The actual status bar
+    local bar = CreateFrame("StatusBar", nil, bg)
+    bar:SetPoint("TOPLEFT", bg, "TOPLEFT", 1, -1)
+    bar:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT", -1, 1)
+    bar:SetMinMaxValues(0, 100)
+    bar:SetValue(0)
+    bar:SetStatusBarTexture(ST.Config.barTexture)
+
+    -- Set color based on stat type
+    local r, g, b = self:GetColorForStat(self.statType)
+    bar:SetStatusBarColor(r, g, b, 1)
+    frame.bar = bar
+
+    -- Value text (right side)
+    local valueText = bar:CreateFontString(nil, "OVERLAY")
+    valueText:SetPoint("RIGHT", bar, "RIGHT", -4, 0)
+    valueText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    valueText:SetJustifyH("RIGHT")
+    valueText:SetText("0")
+    valueText:SetTextColor(1, 1, 1)
+    frame.valueText = valueText
+
+    -- Name text (left side)
+    local nameText = bar:CreateFontString(nil, "OVERLAY")
+    nameText:SetPoint("LEFT", bar, "LEFT", 4, 0)
+    nameText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    nameText:SetJustifyH("LEFT")
+    nameText:SetText(self.name)
+    nameText:SetTextColor(1, 1, 1)
+    frame.nameText = nameText
+
+    -- Class/spec icon (for future expansion)
+    local icon = bar:CreateTexture(nil, "OVERLAY")
+    icon:SetSize(16, 16)
+    icon:SetPoint("LEFT", bar, "LEFT", 4, 0)
+    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    icon:Hide() -- Hide by default, enable if needed
+    frame.icon = icon
+
+    return frame
+end
+
+-- Update the bar with smooth animation
+function StatBar:Update(value, maxValue)
+    -- Only update if the value has actually changed
+    if value ~= self.value then
+        self.value = value or 0
+
+        local displayValue
+        local percentValue
+
+        if self:IsPercentageStat() then
+            -- For percentages (like haste)
+            displayValue = string.format("%.2f%%", self.value)
+            percentValue = math.min(self.value, 100)
+        else
+            -- For primary stats
+            displayValue = string.format("%d", self.value)
+
+            -- Calculate percentage using class-based maximums
+            local playerClass = select(2, UnitClass("player"))
+            local maxForClass = self:GetMaxValueForClass(playerClass, self.statType)
+            percentValue = math.min((self.value / maxForClass) * 100, 100)
+        end
+
+        -- Only update text if it's changed
+        local currentText = self.frame.valueText:GetText()
+        if currentText ~= displayValue then
+            self.frame.valueText:SetText(displayValue)
+        end
+
+        -- Use animation for smooth transition
+        if self.smoothing then
+            self:AnimateToValue(percentValue)
+        else
+            self.frame.bar:SetValue(percentValue)
+        end
+    end
+end
+
+-- Animate bar value change
+function StatBar:AnimateToValue(newValue)
+    -- Stop any current animation
+    self.animationGroup:Stop()
+
+    -- Get current value
+    local currentValue = self.frame.bar:GetValue()
+
+    -- Only animate if there's a significant difference (1% or more)
+    if math.abs(newValue - currentValue) >= 1.0 then
+        -- Set up animation properties
+        self.valueAnimation.startValue = currentValue
+        self.valueAnimation.changeValue = newValue - currentValue
+        self.animationGroup:Play()
+    else
+        -- Just set the value directly for small changes
+        self.frame.bar:SetValue(newValue)
+    end
+end
+
+-- Helper function to detect percentage stats
+function StatBar:IsPercentageStat()
+    return self.statType == "HASTE" or
+           self.statType == "CRIT" or
+           self.statType == "MASTERY" or
+           self.statType == "VERSATILITY"
+end
+
+-- Get appropriate max value based on character class and stat type
+function StatBar:GetMaxValueForClass(class, statType)
+    -- These are rough estimations, adjust based on your game version
+    local maxValues = {
+        WARRIOR = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 2000, STAMINA = 6000 },
+        PALADIN = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 3000, STAMINA = 6000 },
+        DEATHKNIGHT = { STRENGTH = 5000, AGILITY = 2000, INTELLECT = 2000, STAMINA = 6000 },
+        HUNTER = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5000 },
+        ROGUE = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5000 },
+        MONK = { STRENGTH = 2500, AGILITY = 5000, INTELLECT = 3000, STAMINA = 5500 },
+        DEMONHUNTER = { STRENGTH = 2000, AGILITY = 5000, INTELLECT = 2000, STAMINA = 5500 },
+        PRIEST = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 5000 },
+        MAGE = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 4500 },
+        WARLOCK = { STRENGTH = 2000, AGILITY = 2000, INTELLECT = 5000, STAMINA = 5000 },
+        DRUID = { STRENGTH = 3000, AGILITY = 4000, INTELLECT = 4000, STAMINA = 5500 },
+        SHAMAN = { STRENGTH = 3000, AGILITY = 4000, INTELLECT = 4000, STAMINA = 5500 },
+    }
+
+    if maxValues[class] and maxValues[class][statType] then
+        return maxValues[class][statType]
+    end
+
+    -- Default fallback values
+    local defaults = {
+        STRENGTH = 4000,
+        AGILITY = 4000,
+        INTELLECT = 4000,
+        STAMINA = 5000
+    }
+
+    return defaults[statType] or 5000
+end
+
+-- Get color for stat type
+function StatBar:GetColorForStat(statType)
+    -- Details!-inspired colors with higher saturation
+    local colors = {
+        STRENGTH = { 0.9, 0.2, 0.2 },     -- Bright Red
+        AGILITY = { 0.2, 0.9, 0.2 },      -- Bright Green
+        INTELLECT = { 0.2, 0.2, 0.9 },    -- Bright Blue
+        STAMINA = { 0.9, 0.7, 0.0 },      -- Gold
+        HASTE = { 0.0, 0.9, 0.9 },        -- Cyan
+        CRIT = { 0.9, 0.9, 0.0 },         -- Yellow
+        MASTERY = { 0.9, 0.4, 0.0 },      -- Orange
+        VERSATILITY = { 0.2, 0.6, 0.2 }   -- Green
+    }
+
+    if colors[statType] then
+        return unpack(colors[statType])
+    else
+        return 0.8, 0.8, 0.8 -- Default to white/grey
+    end
+end
+
+-- Set position relative to parent
+function StatBar:SetPosition(x, y)
+    self.frame:SetPoint("TOPLEFT", self.frame:GetParent(), "TOPLEFT", x, y)
+end
+
+-- Set highlight/select state
+function StatBar:SetSelected(selected)
+    if selected then
+        if not self.frame.highlight then
+            local highlight = self.frame.bar:CreateTexture(nil, "OVERLAY")
+            highlight:SetAllPoints()
+            highlight:SetColorTexture(1, 1, 1, 0.1)
+            self.frame.highlight = highlight
+        end
+        self.frame.highlight:Show()
+    elseif self.frame.highlight then
+        self.frame.highlight:Hide()
+    end
+end
+
+-- Add this new method to StatBar.lua
+function StatBar:UpdateFont()
+    -- Update the font for both text elements
+    self.frame.valueText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    self.frame.nameText:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+end
+
+-- Add this new method to update bar texture
+function StatBar:UpdateTexture()
+    -- Update the texture for the status bar
+    self.frame.bar:SetStatusBarTexture(ST.Config.barTexture)
+end

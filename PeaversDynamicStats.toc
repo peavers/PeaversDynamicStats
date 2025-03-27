@@ -1,0 +1,11 @@
+## Interface: 110100
+## Title: PeaversDynamicStats
+## Notes: Displays primary player stats as horizontal bars
+## Author: peavers
+## Version: 1.0.0
+## SavedVariables: PeaversDynamicStatsDB
+
+src/Config.lua
+src/Utils.lua
+src/StatBar.lua
+src/StatTracker.lua

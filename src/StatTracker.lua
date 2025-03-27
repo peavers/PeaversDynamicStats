@@ -1,0 +1,252 @@
+--[[
+    StatTracker.lua - Main addon file
+]]
+
+local addonName, ST = ...
+local Core = {}
+ST.Core = Core
+
+-- Initialize local variables
+local updateTimer = 0
+local inCombat = false
+Core.bars = {}
+
+-- Frame to handle events
+local frame = CreateFrame("Frame")
+
+-- Creates the titlebar
+function Core:CreateTitleBar()
+    -- Add title bar
+    local titleBar = CreateFrame("Frame", nil, self.frame, "BackdropTemplate")
+    titleBar:SetHeight(20)
+    titleBar:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, 0)
+    titleBar:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, 0)
+    titleBar:SetBackdrop({
+        bgFile = "Interface\\BUTTONS\\WHITE8X8",
+        edgeFile = "Interface\\BUTTONS\\WHITE8X8",
+        tile = true, tileSize = 16, edgeSize = 1,
+    })
+
+    -- Use the same background color as the main frame
+    titleBar:SetBackdropColor(ST.Config.bgColor.r, ST.Config.bgColor.g, ST.Config.bgColor.b, ST.Config.bgAlpha)
+    titleBar:SetBackdropBorderColor(0, 0, 0, 1)
+
+    -- Add title text
+    local title = titleBar:CreateFontString(nil, "OVERLAY")
+    title:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    title:SetPoint("LEFT", titleBar, "LEFT", 5, 0)
+    title:SetText("PeaversDynamicStats")
+
+    -- Set the title text to white instead of class color
+    title:SetTextColor(1, 1, 1)
+
+    -- Add vertical line separator after title text
+    local verticalLine = titleBar:CreateTexture(nil, "ARTWORK")
+    verticalLine:SetSize(1, 16)
+    verticalLine:SetPoint("LEFT", title, "RIGHT", 5, 0)
+    verticalLine:SetColorTexture(0.3, 0.3, 0.3, 0.5)
+
+    -- Add a subtitle or version
+    local subtitle = titleBar:CreateFontString(nil, "OVERLAY")
+    subtitle:SetFont(ST.Config.fontFace, ST.Config.fontSize, "OUTLINE")
+    subtitle:SetPoint("LEFT", verticalLine, "RIGHT", 5, 0)
+    subtitle:SetText("v1.0")
+    subtitle:SetTextColor(0.8, 0.8, 0.8)
+
+    -- Make frame movable
+    self.frame:SetMovable(true)
+    self.frame:EnableMouse(true)
+    self.frame:RegisterForDrag("LeftButton")
+    self.frame:SetScript("OnDragStart", self.frame.StartMoving)
+    self.frame:SetScript("OnDragStop", function(frame)
+        frame:StopMovingOrSizing()
+        -- Save position
+        local point, _, _, x, y = frame:GetPoint()
+        ST.Config.framePoint = point
+        ST.Config.frameX = x
+        ST.Config.frameY = y
+        ST.Config:Save()
+    end)
+
+    return titleBar
+end
+
+-- Initialize the addon
+function Core:Initialize()
+   self.previousValues = {}
+
+    -- Create main frame
+    self.frame = CreateFrame("Frame", "PeaversDynamicStatsFrame", UIParent, "BackdropTemplate")
+    self.frame:SetSize(ST.Config.frameWidth, ST.Config.frameHeight)
+    self.frame:SetPoint(ST.Config.framePoint, ST.Config.frameX, ST.Config.frameY)
+    self.frame:SetBackdrop({
+        bgFile = "Interface\\BUTTONS\\WHITE8X8",
+        edgeFile = "Interface\\BUTTONS\\WHITE8X8",
+        tile = true, tileSize = 16, edgeSize = 1,
+    })
+    self.frame:SetBackdropColor(ST.Config.bgColor.r, ST.Config.bgColor.g, ST.Config.bgColor.b, ST.Config.bgAlpha)
+    self.frame:SetBackdropBorderColor(0, 0, 0, 1)
+
+    -- Create title bar using our new method
+    local titleBar = self:CreateTitleBar()
+
+    -- Create content frame
+    self.contentFrame = CreateFrame("Frame", nil, self.frame)
+    self.contentFrame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -20)
+    self.contentFrame:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", 0, 0)
+
+    -- Create the stat bars
+    self:CreateBars()
+
+    -- Show if needed
+    if ST.Config.showOnLogin then
+        self.frame:Show()
+    else
+        self.frame:Hide()
+    end
+end
+
+-- Create or recreate stat bars
+function Core:CreateBars()
+    -- Clear existing bars
+    for _, bar in ipairs(self.bars) do
+        bar.frame:Hide()
+    end
+    self.bars = {}
+
+    -- Get player's primary stat
+    local _, class = UnitClass("player")
+    local primaryStat = ST.Utils:GetPrimaryStatForClass(class)
+
+    -- Stats to display in order
+    local statOrder = {
+        "STRENGTH", "AGILITY", "INTELLECT", "STAMINA",
+        "HASTE", "CRIT", "MASTERY", "VERSATILITY"
+    }
+
+    -- Stat display names
+    local statNames = {
+        STRENGTH = "Strength",
+        AGILITY = "Agility",
+        INTELLECT = "Intellect",
+        STAMINA = "Stamina",
+        HASTE = "Haste",
+        CRIT = "Critical Strike",
+        MASTERY = "Mastery",
+        VERSATILITY = "Versatility"
+    }
+
+    -- Create bars for enabled stats
+    local yOffset = 0 -- Changed from -5 to 0
+    for _, statType in ipairs(statOrder) do
+        if ST.Config.showStats[statType] then
+            local bar = ST.StatBar:New(self.contentFrame, statNames[statType], statType)
+            bar:SetPosition(0, yOffset) -- Changed from 10 to 0
+
+            -- Update the bar width to match the frame width
+            bar.frame:SetWidth(self.contentFrame:GetWidth())
+
+            -- Update stat values
+            local value, maxValue = ST.Utils:GetStatValue(statType, primaryStat)
+            bar:Update(value, maxValue)
+
+            -- Add to bar collection
+            table.insert(self.bars, bar)
+
+            -- Adjust offset for next bar using the configured spacing
+            yOffset = yOffset - (ST.Config.barHeight + ST.Config.barSpacing)
+        end
+    end
+
+    -- Adjust frame height based on number of bars
+    local contentHeight = math.abs(yOffset)
+    self.frame:SetHeight(contentHeight + 20) -- Add title bar height (also removing the +5 padding)
+end
+
+-- Update all bars with latest stat values
+function Core:UpdateAllBars()
+    -- Initialize previousValues table if it doesn't exist
+    if not self.previousValues then
+        self.previousValues = {}
+    end
+
+    -- Get player's primary stat
+    local _, class = UnitClass("player")
+    local primaryStat = ST.Utils:GetPrimaryStatForClass(class)
+
+    -- Update each bar only if value has changed
+    for _, bar in ipairs(self.bars) do
+        local value, maxValue = ST.Utils:GetStatValue(bar.statType, primaryStat)
+
+        -- Create key for this stat if it doesn't exist
+        local statKey = bar.statType
+        if not self.previousValues[statKey] then
+            self.previousValues[statKey] = 0
+        end
+
+        -- Only update the bar if the value has changed
+        if value ~= self.previousValues[statKey] then
+            bar:Update(value, maxValue)
+            self.previousValues[statKey] = value
+        end
+    end
+end
+
+-- Event handling
+function Core:OnEvent(event, ...)
+    if event == "ADDON_LOADED" and ... == addonName then
+        ST.Config:Load()
+        self:Initialize()
+        frame:UnregisterEvent("ADDON_LOADED")
+    elseif event == "PLAYER_LOGOUT" then
+        ST.Config:Save()
+    elseif event == "UNIT_STATS" or event == "UNIT_AURA" or event == "PLAYER_EQUIPMENT_CHANGED" then
+        self:UpdateAllBars()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        inCombat = true
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        inCombat = false
+    end
+end
+
+-- OnUpdate handler for periodic updates
+function Core:OnUpdate(elapsed)
+    updateTimer = updateTimer + elapsed
+
+    -- Use a much longer interval when not in combat
+    local interval = inCombat and ST.Config.combatUpdateInterval or 2.0 -- 2 seconds when out of combat
+
+    if updateTimer >= interval then
+        -- Only update when necessary
+        self:UpdateAllBars()
+        updateTimer = 0
+    end
+end
+
+-- Register events
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_LOGOUT")
+frame:RegisterEvent("UNIT_STATS")
+frame:RegisterEvent("UNIT_AURA")
+frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+
+-- Set event and update handlers
+frame:SetScript("OnEvent", function(self, event, ...) Core:OnEvent(event, ...) end)
+frame:SetScript("OnUpdate", function(self, elapsed) Core:OnUpdate(elapsed) end)
+
+-- Slash command to toggle visibility
+SLASH_PEAVERSDYNAMICSTATS1 = "/pds"
+SLASH_PEAVERSDYNAMICSTATS2 = "/dynstats"
+SlashCmdList["PEAVERSDYNAMICSTATS"] = function(msg)
+    if msg == "config" or msg == "options" then
+        ST.Config:OpenOptions()
+    else
+        if Core.frame:IsShown() then
+            Core.frame:Hide()
+        else
+            Core.frame:Show()
+        end
+    end
+end

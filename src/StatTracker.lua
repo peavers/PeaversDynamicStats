@@ -78,6 +78,12 @@ end
 function Core:Initialize()
    self.previousValues = {}
 
+  -- Load config first
+   ST.Config:Load()
+
+   -- Initialize the options panel
+   ST.Config:InitializeOptions()
+
     -- Create main frame
     self.frame = CreateFrame("Frame", "PeaversDynamicStatsFrame", UIParent, "BackdropTemplate")
     self.frame:SetSize(ST.Config.frameWidth, ST.Config.frameHeight)

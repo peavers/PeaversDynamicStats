@@ -234,37 +234,44 @@ function Config:InitializeOptions()
         end
     end)
 
-    -- Add font dropdown section
+    -- Add frame width slider
     yPos = yPos - 40
-    local fontText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    fontText:SetPoint("TOPLEFT", 16, yPos)
-    fontText:SetText("Font:")
+    local frameWidthText = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    frameWidthText:SetPoint("TOPLEFT", 16, yPos)
+    frameWidthText:SetText("Frame Width:")
 
-    yPos = yPos - 25
-    local fontDropdown = CreateFrame("Frame", "PeaversDynamicStatsFontDropdown", panel, "UIDropDownMenuTemplate")
-    fontDropdown:SetPoint("TOPLEFT", 25, yPos)
-    UIDropDownMenu_SetWidth(fontDropdown, 200)
+    yPos = yPos - 20
+    local frameWidthSlider = CreateFrame("Slider", "PeaversDynamicStatsWidthSlider", panel, "OptionsSliderTemplate")
+    frameWidthSlider:SetPoint("TOPLEFT", 25, yPos)
+    frameWidthSlider:SetWidth(200)
+    frameWidthSlider:SetMinMaxValues(150, 400)
+    frameWidthSlider:SetValueStep(10)
+    frameWidthSlider:SetValue(Config.frameWidth)
 
-    local fonts = Config:GetFonts()
-    local currentFontName = fonts[Config.fontFace] or "Default"
-    UIDropDownMenu_SetText(fontDropdown, currentFontName)
+    -- Set slider text
+    _G[frameWidthSlider:GetName() .. "Low"]:SetText("150")
+    _G[frameWidthSlider:GetName() .. "High"]:SetText("400")
+    _G[frameWidthSlider:GetName() .. "Text"]:SetText(Config.frameWidth)
 
-    UIDropDownMenu_Initialize(fontDropdown, function(self, level)
-        local info = UIDropDownMenu_CreateInfo()
-        for path, name in pairs(fonts) do
-            info.text = name
-            info.value = path
-            info.func = function()
-                Config.fontFace = path
-                UIDropDownMenu_SetText(fontDropdown, name)
-                Config:Save()
-                if ST.Core and ST.Core.bars then
-                    for _, bar in ipairs(ST.Core.bars) do
-                        bar:UpdateFont()
-                    end
+    frameWidthSlider:SetScript("OnValueChanged", function(self, value)
+        -- Round to nearest 10
+        value = math.floor(value / 10 + 0.5) * 10
+        _G[self:GetName() .. "Text"]:SetText(value)
+
+        Config.frameWidth = value
+        Config.barWidth = value - 20  -- Adjust bar width to account for padding
+        Config:Save()
+
+        -- Update the frame width if Core is available
+        if ST.Core and ST.Core.frame then
+            ST.Core.frame:SetWidth(value)
+
+            -- Update all bar widths
+            if ST.Core.bars then
+                for _, bar in ipairs(ST.Core.bars) do
+                    bar.frame:SetWidth(value - 20)  -- Account for frame padding
                 end
             end
-            UIDropDownMenu_AddButton(info)
         end
     end)
 

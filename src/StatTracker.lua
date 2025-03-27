@@ -143,8 +143,8 @@ function Core:CreateBars()
             local bar = ST.StatBar:New(self.contentFrame, statNames[statType], statType)
             bar:SetPosition(0, yOffset)
 
-            -- Update the bar width to match the frame width
-            bar.frame:SetWidth(self.contentFrame:GetWidth())
+            -- Update the bar width to match the configured bar width
+            bar.frame:SetWidth(ST.Config.barWidth)
 
             -- Store yOffset for potential bar height updates
             bar.frame._yOffset = yOffset
@@ -164,6 +164,9 @@ function Core:CreateBars()
     -- Adjust frame height based on number of bars
     local contentHeight = math.abs(yOffset)
     self.frame:SetHeight(contentHeight + 20) -- Add title bar height
+
+    -- Set frame width based on configuration
+    self.frame:SetWidth(ST.Config.frameWidth)
 end
 
 -- Update all bars with latest stat values

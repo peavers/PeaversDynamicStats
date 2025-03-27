@@ -212,3 +212,20 @@ function StatBar:UpdateHeight()
     -- This may not be necessary if the parent layout handles positioning
     self:SetPosition(0, self.frame._yOffset or 0)
 end
+
+
+-- Method to update bar height
+function StatBar:UpdateHeight()
+    -- Update the height of the bar frame
+    self.frame:SetHeight(ST.Config.barHeight)
+
+    -- Re-anchor if needed
+    -- This may not be necessary if the parent layout handles positioning
+    self:SetPosition(0, self.frame._yOffset or 0)
+end
+
+-- Method to update bar width
+function StatBar:UpdateWidth()
+    -- Update the width of the bar frame to match the configured bar width
+    self.frame:SetWidth(ST.Config.barWidth)
+end

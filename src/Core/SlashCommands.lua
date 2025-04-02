@@ -1,10 +1,11 @@
 local _, PDS = ...
 local Core = PDS.Core
 
--- Slash command to toggle visibility
+-- Register slash command handler for /pds
 SLASH_PEAVERSDYNAMICSTATS1 = "/pds"
 SlashCmdList["PEAVERSDYNAMICSTATS"] = function(msg)
 	if msg == "config" or msg == "options" then
+		-- Open configuration panel
 		if Settings and Settings.OpenToCategory then
 			Settings.OpenToCategory("PeaversDynamicStats")
 		else
@@ -12,6 +13,7 @@ SlashCmdList["PEAVERSDYNAMICSTATS"] = function(msg)
 			InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
 		end
 	else
+		-- Toggle main frame visibility
 		if Core.frame:IsShown() then
 			Core.frame:Hide()
 		else

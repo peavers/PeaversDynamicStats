@@ -1,7 +1,6 @@
--- At the beginning of Config.lua, add this check:
 local addonName, PDS = ...
 
--- Create Config namespace with default values
+-- Initialize Config namespace with default values
 PDS.Config = {
 	-- Frame settings
 	frameWidth = 250,
@@ -37,13 +36,11 @@ PDS.Config = {
 	}
 }
 
--- Local variables
 local Config = PDS.Config
 local UI
 
--- Initialize options panel
+-- Creates and initializes the options panel
 function Config:InitializeOptions()
-	-- Ensure UI is loaded
 	UI = PDS.UI
 	if not UI then
 		print("ERROR: UI module not loaded. Cannot initialize options.")
@@ -53,19 +50,15 @@ function Config:InitializeOptions()
 	local panel = CreateFrame("Frame")
 	panel.name = "PeaversDynamicStats"
 
-	-- Create scrolling content frame
 	local scrollFrame, content = UI:CreateScrollFrame(panel)
-
-	-- Start position
 	local yPos = 0
 
-	-- Title
+	-- Create header and description
 	local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 25, yPos)
 	title:SetText("Peavers Dynamic Stats")
 	yPos = yPos - 30
 
-	-- Subtitle
 	local subtitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	subtitle:SetPoint("TOPLEFT", 25, yPos)
 	subtitle:SetText("Configuration options for the dynamic stats display")
@@ -200,7 +193,7 @@ function Config:InitializeOptions()
 			end
 		end
 	end)
-	
+
 
 	-- Visual Settings section
 	local _, newY = UI:CreateSectionHeader(content, "Visual Settings", 25, yPos)
@@ -371,7 +364,7 @@ function Config:InitializeOptions()
 	return panel
 end
 
--- Save configuration
+-- Saves all configuration values to the SavedVariables database
 function Config:Save()
 	if not PeaversDynamicStatsDB then
 		PeaversDynamicStatsDB = {}
@@ -394,7 +387,7 @@ function Config:Save()
 	PeaversDynamicStatsDB.lockPosition = self.lockPosition
 end
 
--- Load configuration
+-- Loads configuration values from the SavedVariables database
 function Config:Load()
 	if not PeaversDynamicStatsDB then
 		return
@@ -447,7 +440,7 @@ function Config:Load()
 	end
 end
 
--- Function to get available fonts in alphabetical order
+-- Returns a sorted table of available fonts, including those from LibSharedMedia
 function Config:GetFonts()
 	local fonts = {
 		["Fonts\\ARIALN.TTF"] = "Arial Narrow",
@@ -456,7 +449,6 @@ function Config:GetFonts()
 		["Fonts\\SKURRI.TTF"] = "Skurri"
 	}
 
-	-- Check for SharedMedia
 	if LibStub and LibStub:GetLibrary("LibSharedMedia-3.0", true) then
 		local LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
 		if LSM then
@@ -466,7 +458,6 @@ function Config:GetFonts()
 		end
 	end
 
-	-- Sort the fonts table by display name
 	local sortedFonts = {}
 	for path, name in pairs(fonts) do
 		table.insert(sortedFonts, { path = path, name = name })
@@ -476,7 +467,6 @@ function Config:GetFonts()
 		return a.name < b.name
 	end)
 
-	-- Rebuild the fonts table
 	local result = {}
 	for _, font in ipairs(sortedFonts) do
 		result[font.path] = font.name
@@ -485,7 +475,7 @@ function Config:GetFonts()
 	return result
 end
 
--- Function to get available bar textures in alphabetical order
+-- Returns a sorted table of available statusbar textures from various sources
 function Config:GetBarTextures()
 	local textures = {
 		["Interface\\TargetingFrame\\UI-StatusBar"] = "Default",
@@ -494,18 +484,15 @@ function Config:GetBarTextures()
 		["Interface\\RaidFrame\\Raid-Bar-Hp-Fill"] = "Raid"
 	}
 
-	-- Check for SharedMedia which is the standard library for shared textures
 	if LibStub and LibStub:GetLibrary("LibSharedMedia-3.0", true) then
 		local LSM = LibStub:GetLibrary("LibSharedMedia-3.0")
 		if LSM then
-			-- Properly iterate through all statusbar textures
 			for name, path in pairs(LSM:HashTable("statusbar")) do
 				textures[path] = name
 			end
 		end
 	end
 
-	-- Check if Details! is loaded and add its textures
 	if _G.Details and _G.Details.statusbar_info then
 		for i, textureTable in ipairs(_G.Details.statusbar_info) do
 			if textureTable.file and textureTable.name then
@@ -514,7 +501,6 @@ function Config:GetBarTextures()
 		end
 	end
 
-	-- Sort the textures table by display name
 	local sortedTextures = {}
 	for path, name in pairs(textures) do
 		table.insert(sortedTextures, { path = path, name = name })
@@ -524,7 +510,6 @@ function Config:GetBarTextures()
 		return a.name < b.name
 	end)
 
-	-- Rebuild the textures table
 	local result = {}
 	for _, texture in ipairs(sortedTextures) do
 		result[texture.path] = texture.name
@@ -533,14 +518,14 @@ function Config:GetBarTextures()
 	return result
 end
 
--- Function to open settings
+-- Opens the configuration panel, initializing it if needed
 function Config:OpenOptions()
 	if not self.optionsPanel then
 		self.optionsPanel = self:InitializeOptions()
 	end
 end
 
--- Slash command handler
+-- Handler for the /pds config command
 PDS.Config.OpenOptionsCommand = function()
 	Config:OpenOptions()
 end

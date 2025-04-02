@@ -1,10 +1,10 @@
 local addonName, PDS = ...
 
--- Create Utils namespace
+-- Initialize Utils namespace
 PDS.Utils = {}
 local Utils = PDS.Utils
 
--- Get stat value
+-- Returns the current value of the specified secondary stat
 function Utils:GetStatValue(statType)
 	local value = 0
 

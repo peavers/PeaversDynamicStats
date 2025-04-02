@@ -15,6 +15,7 @@ PDS.Config = {
 	barWidth = 230,
 	barHeight = 20,
 	barSpacing = 2,
+	barBgAlpha = 0.7,
 
 	-- Visual settings
 	fontFace = "Fonts\\FRIZQT__.TTF",
@@ -173,6 +174,34 @@ function Config:InitializeOptions()
 	end)
 
 	yPos = yPos - 10 -- Extra spacing between sections
+
+	-- Bar background opacity slider
+	local barBgOpacityLabel, newY = UI:CreateLabel(
+			content,
+			"Bar Background Opacity: " .. math.floor(Config.barBgAlpha * 100) .. "%",
+			25,
+			yPos
+	)
+	yPos = newY
+
+	local barBgOpacitySlider, newY = UI:CreateSlider(
+			content, "PeaversBarBgOpacitySlider", 0, 1, 0.05, 25, yPos, Config.barBgAlpha
+	)
+	yPos = newY
+
+	barBgOpacitySlider:SetScript("OnValueChanged", function(self, value)
+		local roundedValue = math.floor(value * 20 + 0.5) / 20
+		barBgOpacityLabel:SetText("Bar Background Opacity: " .. math.floor(roundedValue * 100) .. "%")
+		Config.barBgAlpha = roundedValue
+		Config:Save()
+		if PDS.Core and PDS.Core.bars then
+			for _, bar in ipairs(PDS.Core.bars) do
+				bar:UpdateBackgroundOpacity()
+			end
+		end
+	end)
+	
+
 	-- Visual Settings section
 	local _, newY = UI:CreateSectionHeader(content, "Visual Settings", 25, yPos)
 	yPos = newY
@@ -356,6 +385,7 @@ function Config:Save()
 	PeaversDynamicStatsDB.barWidth = self.barWidth
 	PeaversDynamicStatsDB.barHeight = self.barHeight
 	PeaversDynamicStatsDB.barTexture = self.barTexture
+	PeaversDynamicStatsDB.barBgAlpha = self.barBgAlpha
 	PeaversDynamicStatsDB.bgAlpha = self.bgAlpha
 	PeaversDynamicStatsDB.bgColor = self.bgColor
 	PeaversDynamicStatsDB.showStats = self.showStats
@@ -393,6 +423,9 @@ function Config:Load()
 	end
 	if PeaversDynamicStatsDB.barTexture then
 		self.barTexture = PeaversDynamicStatsDB.barTexture
+	end
+	if PeaversDynamicStatsDB.barBgAlpha then
+		self.barBgAlpha = PeaversDynamicStatsDB.barBgAlpha
 	end
 	if PeaversDynamicStatsDB.bgAlpha then
 		self.bgAlpha = PeaversDynamicStatsDB.bgAlpha
@@ -452,7 +485,7 @@ function Config:GetFonts()
 	return result
 end
 
--- Enhanced function to get available bar textures in alphabetical order
+-- Function to get available bar textures in alphabetical order
 function Config:GetBarTextures()
 	local textures = {
 		["Interface\\TargetingFrame\\UI-StatusBar"] = "Default",

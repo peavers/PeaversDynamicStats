@@ -55,7 +55,7 @@ function StatBar:CreateFrame(parent)
 		edgeFile = "Interface\\BUTTONS\\WHITE8X8",
 		tile = true, edgeSize = 1,
 	})
-	bg:SetBackdropColor(0, 0, 0, 0.7)
+	bg:SetBackdropColor(0, 0, 0, PDS.Config.barBgAlpha)
 	bg:SetBackdropBorderColor(0, 0, 0, 1)
 	frame.bg = bg
 
@@ -205,4 +205,10 @@ function StatBar:UpdateWidth()
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint("TOPLEFT", self.frame:GetParent(), "TOPLEFT", 0, self.yOffset)
 	self.frame:SetPoint("TOPRIGHT", self.frame:GetParent(), "TOPRIGHT", 0, self.yOffset)
+end
+
+-- Method to update bar background opacity
+function StatBar:UpdateBackgroundOpacity()
+	-- Update the opacity of the bar background
+	self.frame.bg:SetBackdropColor(0, 0, 0, PDS.Config.barBgAlpha)
 end

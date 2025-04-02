@@ -6,11 +6,16 @@ SLASH_PEAVERSDYNAMICSTATS1 = "/pds"
 SlashCmdList["PEAVERSDYNAMICSTATS"] = function(msg)
 	if msg == "config" or msg == "options" then
 		-- Open configuration panel
-		if Settings and Settings.OpenToCategory then
-			Settings.OpenToCategory("PeaversDynamicStats")
+		if PDS.Config.OpenOptionsCommand then
+			PDS.Config.OpenOptionsCommand()
 		else
-			InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
-			InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
+			-- Fallback to direct category opening
+			if Settings and Settings.OpenToCategory then
+				Settings.OpenToCategory("PeaversDynamicStats")
+			else
+				InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
+				InterfaceOptionsFrame_OpenToCategory("PeaversDynamicStats")
+			end
 		end
 	else
 		-- Toggle main frame visibility

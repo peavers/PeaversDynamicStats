@@ -9,24 +9,14 @@ function Core:CreateBars()
 	end
 	self.bars = {}
 
-	local statOrder = {
-		"HASTE", "CRIT", "MASTERY", "VERSATILITY"
-	}
-
-	local statNames = {
-		HASTE = "Haste",
-		CRIT = "Critical Strike",
-		MASTERY = "Mastery",
-		VERSATILITY = "Versatility"
-	}
-
 	local yOffset = 0
-	for _, statType in ipairs(statOrder) do
+	for _, statType in ipairs(PDS.Stats.STAT_ORDER) do
 		if PDS.Config.showStats[statType] then
-			local bar = PDS.StatBar:New(self.contentFrame, statNames[statType], statType)
+			local statName = PDS.Stats:GetName(statType)
+			local bar = PDS.StatBar:New(self.contentFrame, statName, statType)
 			bar:SetPosition(0, yOffset)
 
-			local value = PDS.Utils:GetStatValue(statType)
+			local value = PDS.Stats:GetValue(statType)
 			bar:Update(value)
 
 			table.insert(self.bars, bar)
@@ -53,7 +43,7 @@ function Core:UpdateAllBars()
 	end
 
 	for _, bar in ipairs(self.bars) do
-		local value = PDS.Utils:GetStatValue(bar.statType)
+		local value = PDS.Stats:GetValue(bar.statType)
 		local statKey = bar.statType
 
 		if not self.previousValues[statKey] then

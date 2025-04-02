@@ -9,9 +9,6 @@ Core.bars = {}
 function Core:Initialize()
 	self.previousValues = {}
 
-	PDS.Config:Load()
-	PDS.Config:InitializeOptions()
-
 	self.frame = CreateFrame("Frame", "PeaversDynamicStatsFrame", UIParent, "BackdropTemplate")
 	self.frame:SetSize(PDS.Config.frameWidth, PDS.Config.frameHeight)
 	self.frame:SetPoint(PDS.Config.framePoint, PDS.Config.frameX, PDS.Config.frameY)
@@ -39,6 +36,26 @@ function Core:Initialize()
 	else
 		self.frame:Hide()
 	end
+end
+
+-- Registers all required events
+function Core:RegisterEvents()
+	local frame = CreateFrame("Frame")
+	self.eventFrame = frame
+
+	frame:RegisterEvent("UNIT_STATS")
+	frame:RegisterEvent("UNIT_AURA")
+	frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+	frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+	frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+
+	-- Set up event and update handlers
+	frame:SetScript("OnEvent", function(self, event, ...)
+		Core:OnEvent(event, ...)
+	end)
+	frame:SetScript("OnUpdate", function(self, elapsed)
+		Core:OnUpdate(elapsed)
+	end)
 end
 
 -- Recalculates frame height based on number of bars and title bar visibility

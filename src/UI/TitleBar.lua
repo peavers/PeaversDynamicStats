@@ -31,7 +31,7 @@ function TitleBar:Create(parentFrame)
 	local subtitle = titleBar:CreateFontString(nil, "OVERLAY")
 	subtitle:SetFont(PDS.Config.fontFace, PDS.Config.fontSize, "OUTLINE")
 	subtitle:SetPoint("LEFT", verticalLine, "RIGHT", 5, 0)
-	subtitle:SetText("v1.0")
+	subtitle:SetText("v" .. (PDS.version or "1.0.5"))
 	subtitle:SetTextColor(0.8, 0.8, 0.8)
 
 	return titleBar

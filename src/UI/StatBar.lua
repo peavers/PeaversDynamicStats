@@ -93,7 +93,7 @@ function StatBar:Update(value, maxValue)
 	if value ~= self.value then
 		self.value = value or 0
 
-		local displayValue = string.format("%.2f%%", self.value)
+		local displayValue = PDS.Utils:FormatPercent(self.value)
 		local percentValue = math.min(self.value, 100)
 
 		local currentText = self.frame.valueText:GetText()
@@ -126,18 +126,7 @@ end
 
 -- Returns the color for a specific stat type
 function StatBar:GetColorForStat(statType)
-	local colors = {
-		HASTE = { 0.0, 0.9, 0.9 }, -- Cyan
-		CRIT = { 0.9, 0.9, 0.0 }, -- Yellow
-		MASTERY = { 0.9, 0.4, 0.0 }, -- Orange
-		VERSATILITY = { 0.2, 0.6, 0.2 }   -- Green
-	}
-
-	if colors[statType] then
-		return unpack(colors[statType])
-	else
-		return 0.8, 0.8, 0.8 -- Default to white/grey
-	end
+	return PDS.Stats:GetColor(statType)
 end
 
 -- Sets the position of the bar relative to its parent

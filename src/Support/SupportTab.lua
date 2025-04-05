@@ -17,6 +17,9 @@ function Support:InitializeOptions()
     panel.name = "Support"
     panel.parent = "PeaversDynamicStats"
 
+    -- Set a specific size for the panel to ensure content is visible
+    panel:SetSize(600, 500)
+
     -- Create a background texture that covers the entire panel
     local background = panel:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints(panel)
@@ -28,9 +31,16 @@ function Support:InitializeOptions()
     scrollFrame:SetPoint("TOPLEFT", 10, -10)
     scrollFrame:SetPoint("BOTTOMRIGHT", -30, 10)
 
+    -- Create the content frame with a specific width to match the scroll frame
     local content = CreateFrame("Frame")
+    content:SetWidth(scrollFrame:GetWidth())
+    content:SetHeight(500) -- Initial height, will be adjusted later
     scrollFrame:SetScrollChild(content)
-    content:SetSize(scrollFrame:GetWidth(), 500) -- Height will be adjusted based on content
+
+    -- Add a visible background to the content frame for debugging
+    local contentBg = content:CreateTexture(nil, "BACKGROUND")
+    contentBg:SetAllPoints(content)
+    contentBg:SetColorTexture(0, 0, 0, 0.1) -- Very light black background to verify visibility
 
     -- Title and description
     local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -53,6 +63,11 @@ function Support:InitializeOptions()
         linkButton:SetSize(scrollFrame:GetWidth() - 40, 30)
         linkButton:SetPoint("TOPLEFT", 20, yPosition)
 
+        -- Add a highlight texture to make the button more visible
+        local highlight = linkButton:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints(linkButton)
+        highlight:SetColorTexture(1, 1, 1, 0.1)
+
         local linkText = linkButton:CreateFontString(nil, "ARTWORK", "GameFontNormal")
         linkText:SetPoint("LEFT", 0, 0)
         linkText:SetText(text)
@@ -70,19 +85,41 @@ function Support:InitializeOptions()
         -- Copy URL to clipboard on click
         linkButton:SetScript("OnClick", function()
             -- Create an editbox for copying
-            local editBox = CreateFrame("EditBox", nil, linkButton)
+            local editBox = CreateFrame("EditBox", nil, UIParent)
             editBox:SetMultiLine(false)
             editBox:SetMaxLetters(0)
             editBox:SetAutoFocus(true)
             editBox:SetFontObject(ChatFontNormal)
-            editBox:SetWidth(1)
-            editBox:SetHeight(1)
+            editBox:SetWidth(scrollFrame:GetWidth())
+            editBox:SetHeight(30)
             editBox:SetText(url)
             editBox:HighlightText()
+
+            -- Position the editbox centered on screen
+            editBox:SetPoint("CENTER", UIParent, "CENTER")
+
+            -- Add a background to make it visible
+            local bg = editBox:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints(editBox)
+            bg:SetColorTexture(0, 0, 0, 0.8)
+
+            -- Add a border
+            local border = CreateFrame("Frame", nil, editBox)
+            border:SetPoint("TOPLEFT", editBox, "TOPLEFT", -2, 2)
+            border:SetPoint("BOTTOMRIGHT", editBox, "BOTTOMRIGHT", 2, -2)
+            border:SetBackdrop({
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                edgeSize = 16,
+                insets = { left = 4, right = 4, top = 4, bottom = 4 },
+            })
+
             editBox:SetScript("OnEscapePressed", function() editBox:Hide() end)
             editBox:SetScript("OnEnterPressed", function() editBox:Hide() end)
             editBox:SetScript("OnEditFocusLost", function() editBox:Hide() end)
             editBox:Show()
+
+            -- Print a message to chat
+            print("URL copied to clipboard: " .. url)
         end)
 
         return linkButton, yPosition - 30
@@ -139,28 +176,47 @@ function Support:InitializeOptions()
     -- Adjust content height based on the last element position
     content:SetHeight(math.abs(yPos) + 60)
 
-	-- Register with the Interface Options as a subcategory
-	if Settings and Settings.RegisterCanvasLayoutSubcategory then
-		-- Register as a subcategory of the main addon settings
-		if PDS.Config.categoryID then
-			local subcategoryID = Settings.RegisterCanvasLayoutSubcategory(PDS.Config.categoryID, panel)
-			Settings.RegisterAddOnCategory(subcategoryID)
-		else
-			-- Fallback: register as a separate category if the main category ID is not available
-			local categoryID = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
-			Settings.RegisterAddOnCategory(categoryID)
-		end
-	else
-		-- Fallback for older versions or if Settings API is not available
-		InterfaceOptions_AddCategory(panel)
-	end
+    -- Event handler for when the panel becomes visible
+    panel:SetScript("OnShow", function()
+        -- Force scrollframe to update
+        scrollFrame:UpdateScrollChildRect()
 
-	return panel
+        -- Log to chat that the panel is shown (for debugging)
+        print(PDS.addonName .. ": Support panel is now visible")
+    end)
+
+    -- This is the part that needs to change - use the modern Settings API consistently
+    if Settings and Settings.RegisterCanvasLayoutSubcategory then
+        -- Make sure the main category ID exists
+        if PDS.Config and PDS.Config.categoryID then
+            -- The key change is here - we need to register directly to the main category
+            local subcategoryID = Settings.RegisterCanvasLayoutSubcategory(PDS.Config.categoryID, panel, panel.name)
+            -- Store the subcategoryID for future reference
+            PDS.Support.subcategoryID = subcategoryID
+
+            -- Register the panel for display - this is crucial for the content to show
+            Settings.RegisterAddOnCategory(subcategoryID)
+        else
+            -- Log an error to help with debugging
+            print(PDS.addonName .. ": Error - Main category ID not found when registering Support tab")
+            -- Fallback if needed
+            local categoryID = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+            Settings.RegisterAddOnCategory(categoryID)
+        end
+    else
+        -- Fallback for older versions
+        InterfaceOptions_AddCategory(panel)
+    end
+
+    return panel
 end
 
 -- Initialize the Support tab when the addon loads
 function Support:Initialize()
     self:InitializeOptions()
+
+    -- Print a message when initialization is complete
+    print(PDS.addonName .. ": Support module initialized")
 end
 
 return Support

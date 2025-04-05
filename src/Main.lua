@@ -28,12 +28,12 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         -- Initialize configuration
         PDS.Config:Initialize()
 
-        -- Initialize configuration UI
+        -- Initialize configuration UI FIRST
         if PDS.Config.UI and PDS.Config.UI.InitializeOptions then
             PDS.Config.UI:InitializeOptions()
         end
 
-        -- Initialize Support tab
+        -- THEN initialize Support tab AFTER main config is ready
         if PDS.Support and PDS.Support.Initialize then
             PDS.Support:Initialize()
         end

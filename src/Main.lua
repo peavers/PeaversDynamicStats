@@ -9,6 +9,7 @@ PDS.UI = {}
 PDS.Utils = {}
 PDS.Config = {}
 PDS.Stats = {}
+PDS.Support = {}
 
 -- Version information
 local function getAddOnMetadata(name, key)
@@ -30,6 +31,11 @@ frame:SetScript("OnEvent", function(self, event, arg1)
         -- Initialize configuration UI
         if PDS.Config.UI and PDS.Config.UI.InitializeOptions then
             PDS.Config.UI:InitializeOptions()
+        end
+
+        -- Initialize Support tab
+        if PDS.Support and PDS.Support.Initialize then
+            PDS.Support:Initialize()
         end
 
         -- Initialize core components

@@ -1,4 +1,4 @@
-## Interface: 110100, 110105
+## Interface: 100205
 
 ## Title: PeaversDynamicStats
 ## Notes: Displays secondary stats (haste, crit, mastery, versatility) in a movable frame
@@ -24,6 +24,9 @@ src\Utils\Utils.lua
 src\Utils\Config.lua
 src\Utils\ConfigUI.lua
 src\Utils\StatTooltips.lua
+
+# Support
+src\Support\SupportTab.lua
 
 # UI components needed by Core
 src\UI\StatBar.lua

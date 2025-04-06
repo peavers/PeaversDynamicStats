@@ -39,6 +39,13 @@ function ConfigUI:InitializeOptions()
     local _, newY = UI:CreateSeparator(content, baseSpacing, yPos)
     yPos = newY - baseSpacing
 
+    -- Create profile management section
+    yPos = self:CreateProfileOptions(content, yPos, baseSpacing, sectionSpacing)
+
+    -- Add a separator between major sections
+    local _, newY = UI:CreateSeparator(content, baseSpacing, yPos)
+    yPos = newY - baseSpacing
+
     -- Create stat checkboxes
     yPos = self:CreateStatOptions(content, yPos, baseSpacing, sectionSpacing)
 
@@ -845,6 +852,172 @@ PDS.Config.UI = ConfigUI
 -- Handler for the /pds config command
 PDS.Config.OpenOptionsCommand = function()
     ConfigUI:OpenOptions()
+end
+
+-- Creates profile management options
+function ConfigUI:CreateProfileOptions(content, yPos, baseSpacing, sectionSpacing)
+    baseSpacing = baseSpacing or 25
+    sectionSpacing = sectionSpacing or 40
+    local controlIndent = baseSpacing + 15
+
+    -- Profile Settings section header
+    local header, newY = UI:CreateSectionHeader(content, "Profile Settings", baseSpacing, yPos)
+    header:SetFont(header:GetFont(), 18)
+    yPos = newY - 10
+
+    -- Current character info
+    local characterKey = Config:GetCurrentCharacterKey()
+    local characterInfo = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    characterInfo:SetPoint("TOPLEFT", controlIndent, yPos)
+    characterInfo:SetText("Current Character: " .. characterKey)
+    yPos = yPos - 25
+
+    -- Current profile info
+    local profileInfo = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    profileInfo:SetPoint("TOPLEFT", controlIndent, yPos)
+    profileInfo:SetText("Current Profile: " .. Config.currentProfile)
+    yPos = yPos - 25
+
+    -- Profile selection dropdown
+    local profileLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    profileLabel:SetPoint("TOPLEFT", controlIndent, yPos)
+    profileLabel:SetText("Select Profile:")
+
+    local profiles = Config:GetProfiles()
+    local currentProfile = Config.currentProfile
+
+    local profileDropdown = CreateFrame("Frame", "PeaversProfileDropdown", content, "UIDropDownMenuTemplate")
+    profileDropdown:SetPoint("TOPLEFT", controlIndent + 120, yPos)
+    UIDropDownMenu_SetWidth(profileDropdown, 200)
+    UIDropDownMenu_SetText(profileDropdown, currentProfile)
+
+    UIDropDownMenu_Initialize(profileDropdown, function(self, level)
+        local info = UIDropDownMenu_CreateInfo()
+        for _, profileName in ipairs(profiles) do
+            info.text = profileName
+            info.checked = (profileName == Config.currentProfile)
+            info.func = function()
+                local success, errorMsg = Config:SelectProfile(profileName)
+                if success then
+                    UIDropDownMenu_SetText(profileDropdown, profileName)
+                    profileInfo:SetText("Current Profile: " .. profileName)
+
+                    -- Refresh the UI to reflect the new profile settings
+                    if PDS.BarManager and PDS.Core and PDS.Core.contentFrame then
+                        PDS.BarManager:CreateBars(PDS.Core.contentFrame)
+                        PDS.Core:AdjustFrameHeight()
+                    end
+                else
+                    print("Error selecting profile: " .. (errorMsg or "Unknown error"))
+                end
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    yPos = yPos - 40
+
+    -- Profile management container
+    local profileContainer = CreateFrame("Frame", nil, content)
+    profileContainer:SetSize(400, 120)
+    profileContainer:SetPoint("TOPLEFT", controlIndent, yPos)
+
+    -- New profile input field
+    local newProfileLabel = profileContainer:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    newProfileLabel:SetPoint("TOPLEFT", 0, 0)
+    newProfileLabel:SetText("New Profile Name:")
+
+    local newProfileInput = CreateFrame("EditBox", "PeaversNewProfileInput", profileContainer, "InputBoxTemplate")
+    newProfileInput:SetPoint("TOPLEFT", 120, 0)
+    newProfileInput:SetSize(200, 20)
+    newProfileInput:SetAutoFocus(false)
+    newProfileInput:SetScript("OnEnterPressed", function(self)
+        self:ClearFocus()
+    end)
+
+    -- Create profile button
+    local createButton = CreateFrame("Button", "PeaversCreateProfileButton", profileContainer, "UIPanelButtonTemplate")
+    createButton:SetSize(100, 22)
+    createButton:SetPoint("TOPLEFT", 0, -30)
+    createButton:SetText("Create")
+    createButton:SetScript("OnClick", function()
+        local profileName = newProfileInput:GetText()
+        if profileName and profileName ~= "" then
+            local success, errorMsg = Config:CreateProfile(profileName)
+            if success then
+                print("Profile created: " .. profileName)
+                newProfileInput:SetText("")
+
+                -- Refresh the dropdown
+                profiles = Config:GetProfiles()
+                UIDropDownMenu_Initialize(profileDropdown, nil, nil, true)
+            else
+                print("Error creating profile: " .. (errorMsg or "Unknown error"))
+            end
+        else
+            print("Please enter a profile name")
+        end
+    end)
+
+    -- Delete profile button
+    local deleteButton = CreateFrame("Button", "PeaversDeleteProfileButton", profileContainer, "UIPanelButtonTemplate")
+    deleteButton:SetSize(100, 22)
+    deleteButton:SetPoint("TOPLEFT", 110, -30)
+    deleteButton:SetText("Delete")
+    deleteButton:SetScript("OnClick", function()
+        local profileName = Config.currentProfile
+        if profileName ~= "Default" then
+            local success, errorMsg = Config:DeleteProfile(profileName)
+            if success then
+                print("Profile deleted: " .. profileName)
+
+                -- Refresh the dropdown and update current profile display
+                profiles = Config:GetProfiles()
+                UIDropDownMenu_Initialize(profileDropdown, nil, nil, true)
+                UIDropDownMenu_SetText(profileDropdown, Config.currentProfile)
+                profileInfo:SetText("Current Profile: " .. Config.currentProfile)
+            else
+                print("Error deleting profile: " .. (errorMsg or "Unknown error"))
+            end
+        else
+            print("Cannot delete the Default profile")
+        end
+    end)
+
+    -- Copy profile button
+    local copyButton = CreateFrame("Button", "PeaversCopyProfileButton", profileContainer, "UIPanelButtonTemplate")
+    copyButton:SetSize(100, 22)
+    copyButton:SetPoint("TOPLEFT", 220, -30)
+    copyButton:SetText("Copy")
+    copyButton:SetScript("OnClick", function()
+        local sourceProfileName = Config.currentProfile
+        local targetProfileName = newProfileInput:GetText()
+        if targetProfileName and targetProfileName ~= "" then
+            local success, errorMsg = Config:CopyProfile(sourceProfileName, targetProfileName)
+            if success then
+                print("Profile copied from " .. sourceProfileName .. " to " .. targetProfileName)
+                newProfileInput:SetText("")
+
+                -- Refresh the dropdown
+                profiles = Config:GetProfiles()
+                UIDropDownMenu_Initialize(profileDropdown, nil, nil, true)
+            else
+                print("Error copying profile: " .. (errorMsg or "Unknown error"))
+            end
+        else
+            print("Please enter a target profile name")
+        end
+    end)
+
+    -- Profile info
+    local profileHelpText = profileContainer:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    profileHelpText:SetPoint("TOPLEFT", 0, -60)
+    profileHelpText:SetText("Profiles allow you to have different settings for each character.\nThe Default profile is used for new characters.")
+    profileHelpText:SetJustifyH("LEFT")
+
+    yPos = yPos - 130
+
+    return yPos
 end
 
 return ConfigUI

@@ -98,4 +98,6 @@ PeaversCommons.Events:Init(addonName, function()
             PDS.StatHistory:RecordStats()
         end
     end, "PDS_Update")
-end)
+end, {
+	announceMessage = "Type /pds config for options."
+})

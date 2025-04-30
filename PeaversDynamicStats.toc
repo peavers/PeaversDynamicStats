@@ -8,6 +8,8 @@
 ## Version: 1.0.38
 ## X-Curse-Project-ID: 1230220
 
+## Dependencies: PeaversCommons
+
 ## SavedVariables: PeaversDynamicStatsDB
 
 ## Category-enUS: Peavers
@@ -35,5 +37,3 @@ src\UI\BarManager.lua
 
 # Core
 src\Core\Core.lua
-src\Core\Events.lua
-src\Core\SlashCommands.lua

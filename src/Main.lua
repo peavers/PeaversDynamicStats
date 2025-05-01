@@ -22,14 +22,22 @@ PDS.version = getAddOnMetadata(addonName, "Version") or "1.0.5"
 PDS.addonName = addonName
 PDS.name = addonName
 
+-- Function to toggle the stats display
+function ToggleStatsDisplay()
+    if PDS.Core.frame:IsShown() then
+        PDS.Core.frame:Hide()
+    else
+        PDS.Core.frame:Show()
+    end
+end
+
+-- Make the function globally accessible
+_G.ToggleStatsDisplay = ToggleStatsDisplay
+
 -- Register slash commands
 PeaversCommons.SlashCommands:Register(addonName, "pds", {
     default = function()
-        if PDS.Core.frame:IsShown() then
-            PDS.Core.frame:Hide()
-        else
-            PDS.Core.frame:Show()
-        end
+        ToggleStatsDisplay()
     end,
 })
 
@@ -39,8 +47,8 @@ PeaversCommons.Events:Init(addonName, function()
     PDS.Config:Initialize()
 
     -- Initialize configuration UI
-    if PDS.Config.UI and PDS.Config.UI.InitializeOptions then
-        PDS.Config.UI:InitializeOptions()
+    if PDS.ConfigUI and PDS.ConfigUI.Initialize then
+        PDS.ConfigUI:Initialize()
     end
 
     -- Initialize support UI
@@ -101,7 +109,7 @@ PeaversCommons.Events:Init(addonName, function()
     
     -- DIRECT REGISTRATION APPROACH
     -- This ensures the addon appears in Options > Addons regardless of PeaversCommons logic
-    C_Timer.After(2, function()
+    C_Timer.After(3, function()
         -- Create the main panel (Support UI as landing page)
         local mainPanel = CreateFrame("Frame")
         mainPanel.name = "PeaversDynamicStats"
@@ -164,6 +172,10 @@ PeaversCommons.Events:Init(addonName, function()
         if PDS.ConfigUI and PDS.ConfigUI.panel then
             -- Use existing ConfigUI panel
             settingsPanel = PDS.ConfigUI.panel
+            -- Print debug message to confirm we're using the proper panel
+            if PeaversCommons and PeaversCommons.Utils and PeaversCommons.Utils.Debug then
+                PeaversCommons.Utils.Debug(PDS, "Using ConfigUI panel with name: " .. (settingsPanel.name or "nil"))
+            end
         else
             -- Create a simple settings panel with commands
             settingsPanel = CreateFrame("Frame")
@@ -204,6 +216,14 @@ PeaversCommons.Events:Init(addonName, function()
             -- Store the category
             PDS.directCategory = category
             PDS.directPanel = mainPanel
+            
+            -- In case the ConfigUI panel wasn't properly initialized before, try to initialize it now
+            if not PDS.ConfigUI.panel and PDS.ConfigUI.InitializeOptions then
+                PDS.ConfigUI.panel = PDS.ConfigUI:InitializeOptions()
+                if PDS.ConfigUI.panel then
+                    settingsPanel = PDS.ConfigUI.panel
+                end
+            end
             
             -- Register settings panel as subcategory
             local settingsCategory = Settings.RegisterCanvasLayoutSubcategory(category, settingsPanel, settingsPanel.name)

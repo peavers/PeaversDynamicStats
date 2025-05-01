@@ -245,7 +245,7 @@ function ConfigUI:InitializeOptions()
     end
 
     local panel = CreateFrame("Frame")
-    panel.name = "PeaversDynamicStats"
+    panel.name = "Settings"
 
     local scrollFrame, content = UI:CreateScrollFrame(panel)
     local yPos = 0
@@ -905,8 +905,13 @@ end
 
 -- Opens the configuration panel
 function ConfigUI:OpenOptions()
-    -- No need to initialize options panel here, it's already initialized in Main.lua
-    Settings.OpenToCategory("PeaversDynamicStats")
+    -- Use the direct registration category and subcategory names
+    if PDS.directCategory and PDS.directSettingsCategory then
+        Settings.OpenToCategory(PDS.directSettingsCategory)
+    else
+        -- Fallback: try to open directly using the name
+        Settings.OpenToCategory("PeaversDynamicStats")
+    end
 end
 
 -- Handler for the /pds config command

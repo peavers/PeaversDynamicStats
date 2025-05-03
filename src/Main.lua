@@ -124,7 +124,7 @@ PeaversCommons.Events:Init(addonName, function()
 
         -- Add background image
         local ICON_ALPHA = 0.1
-        local iconPath = "Interface\\AddOns\\" .. addonName .. "\\src\\Media\\Icon"
+        local iconPath = "Interface\\AddOns\\PeaversCommons\\src\\Media\\Icon"
         local largeIcon = mainPanel:CreateTexture(nil, "BACKGROUND")
         largeIcon:SetTexture(iconPath)
         largeIcon:SetPoint("TOPLEFT", mainPanel, "TOPLEFT", 0, 0)
